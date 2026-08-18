@@ -1,0 +1,467 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { ClipboardList, Clock, CheckCircle2, ShieldAlert, Eye, Edit, Search, Filter, X, Upload, MapPin, Phone, Mail, User } from 'lucide-react';
+
+const OfficerDashboard = () => {
+  const [complaints, setComplaints] = useState([]);
+  const [metrics, setMetrics] = useState({ total: 0, pending: 0, active: 0, resolved: 0 });
+  const [loading, setLoading] = useState(true);
+  
+  // Search & Filter state
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [priorityFilter, setPriorityFilter] = useState('');
+
+  // Modal State for Actioning Complaint
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [actionStatus, setActionStatus] = useState('');
+  const [actionRemarks, setActionRemarks] = useState('');
+  const [actionImage, setActionImage] = useState(null);
+  const [actionImagePreview, setActionImagePreview] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionError, setActionError] = useState('');
+
+  const initDashboard = async () => {
+    try {
+      setLoading(true);
+      // Fetch Metrics
+      const metricRes = await axios.get('/api/officer/dashboard');
+      if (metricRes.data.success) {
+        setMetrics(metricRes.data.metrics);
+      }
+
+      // Fetch Assigned Tickets
+      const ticketRes = await axios.get('/api/officer/complaints', {
+        params: {
+          search,
+          status: statusFilter,
+          priority: priorityFilter
+        }
+      });
+      if (ticketRes.data.success) {
+        setComplaints(ticketRes.data.complaints);
+      }
+    } catch (err) {
+      console.error('Failed to load Officer dashboard:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    initDashboard();
+  }, [search, statusFilter, priorityFilter]);
+
+  const handleOpenActionModal = (c) => {
+    setSelectedComplaint(c);
+    setActionStatus(c.status);
+    setActionRemarks(c.remarks || '');
+    setActionImage(null);
+    setActionImagePreview(c.resolutionImage || null);
+    setActionError('');
+    setModalOpen(true);
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setActionError('Resolution image must be less than 5MB.');
+        return;
+      }
+      setActionImage(file);
+      setActionError('');
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setActionImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleActionSubmit = async (e) => {
+    e.preventDefault();
+    setActionError('');
+
+    if (actionStatus === 'Resolved' && !actionRemarks) {
+      setActionError('Remarks are required to resolve a complaint.');
+      return;
+    }
+
+    setActionLoading(true);
+
+    const formData = new FormData();
+    formData.append('status', actionStatus);
+    formData.append('remarks', actionRemarks);
+    if (actionImage) {
+      formData.append('resolutionImage', actionImage);
+    }
+
+    try {
+      const res = await axios.put(`/api/officer/complaints/${selectedComplaint._id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+
+      if (res.data.success) {
+        alert('Complaint status updated successfully.');
+        setModalOpen(false);
+        initDashboard();
+      }
+    } catch (err) {
+      console.error(err);
+      setActionError(err.response?.data?.message || 'Failed to update complaint.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const getPriorityColor = (prio) => {
+    switch (prio) {
+      case 'High': return 'bg-red-50 text-red-700 border-red-200';
+      case 'Medium': return 'bg-amber-50 text-amber-700 border-amber-200';
+      default: return 'bg-slate-50 text-slate-600 border-slate-205';
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Resolved': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      case 'In Progress': return 'bg-blue-50 text-blue-700 border-blue-200';
+      case 'Assigned': return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+      case 'Under Review': return 'bg-purple-50 text-purple-700 border-purple-200';
+      default: return 'bg-slate-50 text-slate-600 border-slate-200';
+    }
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Title Header */}
+      <div className="mb-8">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Officer Resolution Desk</h1>
+        <p className="text-sm text-slate-500">Manage and update public complaints assigned to your jurisdiction.</p>
+      </div>
+
+      {/* Metrics Cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="bg-white p-5 rounded-xl border border-slate-200/60 shadow-sm flex items-center space-x-4">
+          <div className="p-3 bg-slate-50 text-slate-650 rounded-lg">
+            <ClipboardList className="h-6 w-6" />
+          </div>
+          <div>
+            <span className="text-2xl font-bold text-slate-900 block">{metrics.total}</span>
+            <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">Total Tickets</span>
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-xl border border-slate-200/60 shadow-sm flex items-center space-x-4">
+          <div className="p-3 bg-amber-50 text-amber-600 rounded-lg">
+            <Clock className="h-6 w-6" />
+          </div>
+          <div>
+            <span className="text-2xl font-bold text-slate-900 block">{metrics.pending}</span>
+            <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">Pending tasks</span>
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-xl border border-slate-200/60 shadow-sm flex items-center space-x-4">
+          <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
+            <ShieldAlert className="h-6 w-6 animate-pulse" />
+          </div>
+          <div>
+            <span className="text-2xl font-bold text-slate-900 block">{metrics.active}</span>
+            <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">In Progress</span>
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-xl border border-slate-200/60 shadow-sm flex items-center space-x-4">
+          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg">
+            <CheckCircle2 className="h-6 w-6" />
+          </div>
+          <div>
+            <span className="text-2xl font-bold text-slate-900 block">{metrics.resolved}</span>
+            <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">Resolved Tickets</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Filter and Search Bar */}
+      <div className="bg-white p-4 rounded-xl border border-slate-200/60 shadow-sm mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        {/* Search */}
+        <div className="relative flex-1 max-w-md">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+            <Search className="h-4 w-4" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search by ID, title, or location..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 pr-4 py-2 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+          />
+        </div>
+
+        {/* Filters */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center space-x-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+            <Filter className="h-3.5 w-3.5" />
+            <span>Filters:</span>
+          </div>
+
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="bg-slate-50 border border-slate-300 rounded-lg text-sm px-3 py-1.5 focus:outline-none focus:bg-white focus:border-blue-500 transition-all"
+          >
+            <option value="">All Statuses</option>
+            <option value="Under Review">Under Review</option>
+            <option value="Assigned">Assigned</option>
+            <option value="In Progress">In Progress</option>
+            <option value="Resolved">Resolved</option>
+          </select>
+
+          <select
+            value={priorityFilter}
+            onChange={(e) => setPriorityFilter(e.target.value)}
+            className="bg-slate-50 border border-slate-300 rounded-lg text-sm px-3 py-1.5 focus:outline-none focus:bg-white focus:border-blue-500 transition-all"
+          >
+            <option value="">All Priorities</option>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Complaints List */}
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-20 bg-white border border-slate-200/60 rounded-xl">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-3"></div>
+          <span className="text-slate-550 text-sm">Retrieving assigned tasks...</span>
+        </div>
+      ) : complaints.length === 0 ? (
+        <div className="text-center py-20 bg-white border border-slate-200/60 rounded-xl space-y-3">
+          <CheckCircle2 className="h-14 w-14 text-emerald-500 mx-auto" />
+          <h3 className="text-lg font-bold text-slate-800">No Assigned Tasks</h3>
+          <p className="text-slate-500 text-sm max-w-sm mx-auto">
+            Great job! You have no pending complaints assigned to you matching these filters.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {complaints.map((c) => (
+            <div
+              key={c._id}
+              className="bg-white rounded-xl border border-slate-200/60 shadow-sm p-6 hover:shadow-md transition-all flex flex-col lg:flex-row justify-between lg:items-center gap-6"
+            >
+              {/* Left Details */}
+              <div className="space-y-3 max-w-2xl flex-1">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <span className="text-xs font-bold text-slate-400 font-mono tracking-wider">
+                    {c.complaintId}
+                  </span>
+                  <span className={`px-2 py-0.5 rounded text-xs font-semibold border ${getStatusColor(c.status)}`}>
+                    {c.status}
+                  </span>
+                  <span className={`px-2 py-0.5 rounded text-xs font-semibold border ${getPriorityColor(c.priority)}`}>
+                    {c.priority} Priority
+                  </span>
+                  <span className="text-xs text-slate-400">
+                    Assigned: {new Date(c.updatedAt).toLocaleDateString()}
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900">{c.title}</h3>
+                  <p className="text-slate-600 text-sm mt-1 leading-relaxed">{c.description}</p>
+                </div>
+                
+                {/* Location / Contact info */}
+                <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-xs text-slate-550 pt-1 border-t border-slate-100">
+                  <span className="flex items-center space-x-1">
+                    <MapPin className="h-3.5 w-3.5 text-slate-400" />
+                    <span className="font-semibold text-slate-700">Location:</span>
+                    <span>{c.location}</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Middle User Info Box */}
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-250/30 text-xs space-y-1.5 min-w-[220px]">
+                <span className="font-bold text-slate-700 block uppercase tracking-wider mb-1 flex items-center space-x-1 select-none">
+                  <User className="h-3.5 w-3.5 text-slate-400" />
+                  <span>Citizen Details</span>
+                </span>
+                <p><span className="font-semibold">Name:</span> {c.citizenId?.fullName}</p>
+                <p><span className="font-semibold">Phone:</span> {c.citizenId?.phone}</p>
+                <p className="truncate"><span className="font-semibold">Email:</span> {c.citizenId?.email}</p>
+              </div>
+
+              {/* Right Action Buttons */}
+              <div className="flex sm:flex-row lg:flex-col items-stretch justify-center gap-2.5">
+                <button
+                  onClick={() => handleOpenActionModal(c)}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold shadow-sm transition-colors flex items-center justify-center space-x-1.5"
+                >
+                  <Edit className="h-4 w-4" />
+                  <span>Update Task</span>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Task Update Modal */}
+      {modalOpen && selectedComplaint && (
+        <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center p-4 z-50 overflow-y-auto backdrop-blur-sm">
+          <div className="bg-white w-full max-w-2xl rounded-2xl shadow-2xl border border-slate-100 overflow-hidden flex flex-col my-8">
+            {/* Modal Header */}
+            <div className="bg-slate-900 text-white px-6 py-4 flex justify-between items-center select-none">
+              <div>
+                <h3 className="font-bold text-base">Update Complaint Details</h3>
+                <span className="text-xs text-slate-400">ID: {selectedComplaint.complaintId}</span>
+              </div>
+              <button
+                onClick={() => setModalOpen(false)}
+                className="text-slate-400 hover:text-white transition-colors p-1"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <form onSubmit={handleActionSubmit} className="p-6 space-y-6 overflow-y-auto max-h-[70vh]">
+              {actionError && (
+                <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg flex items-start space-x-2.5">
+                  <ShieldAlert className="h-5 w-5 text-red-505 shrink-0 mt-0.5" />
+                  <p className="text-sm text-red-750 font-medium">{actionError}</p>
+                </div>
+              )}
+
+              {/* Current Details */}
+              <div className="bg-slate-50 p-4 rounded-xl border border-slate-200/50 space-y-1.5 text-xs text-slate-600">
+                <p><span className="font-semibold text-slate-800">Issue Title:</span> {selectedComplaint.title}</p>
+                <p><span className="font-semibold text-slate-800">Description:</span> {selectedComplaint.description}</p>
+                <p><span className="font-semibold text-slate-800">Location:</span> {selectedComplaint.location}</p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {/* Status Selection */}
+                <div>
+                  <label htmlFor="modal-status" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Complaint Status <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="modal-status"
+                    value={actionStatus}
+                    onChange={(e) => setActionStatus(e.target.value)}
+                    className="px-4 py-2.5 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:bg-white focus:border-blue-500 transition-all font-medium"
+                  >
+                    <option value="Under Review">Under Review</option>
+                    <option value="Assigned">Assigned</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Resolved">Resolved</option>
+                  </select>
+                </div>
+
+                {/* Resolution Image Upload */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Upload Resolution Proof Image
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      id="modal-image"
+                      accept="image/*"
+                      className="sr-only"
+                      onChange={handleImageChange}
+                    />
+                    <label
+                      htmlFor="modal-image"
+                      className="flex items-center space-x-2 px-4 py-2.5 w-full bg-slate-50 border border-slate-300 border-dashed rounded-lg text-sm cursor-pointer hover:bg-slate-100 hover:border-slate-400 transition-all text-slate-600"
+                    >
+                      <Upload className="h-4.5 w-4.5 text-slate-450" />
+                      <span>{actionImage ? actionImage.name : 'Select resolution photo'}</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Remarks Area */}
+              <div>
+                <label htmlFor="modal-remarks" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Resolution / Investigation Remarks <span className="text-red-500">{actionStatus === 'Resolved' ? '*' : ''}</span>
+                </label>
+                <textarea
+                  id="modal-remarks"
+                  rows="3"
+                  value={actionRemarks}
+                  onChange={(e) => setActionRemarks(e.target.value)}
+                  className="px-4 py-2.5 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 transition-all"
+                  placeholder={actionStatus === 'Resolved' ? 'Provide remarks explaining how the issue was resolved.' : 'Describe current investigation status/actions taken.'}
+                ></textarea>
+              </div>
+
+              {/* Image Preview */}
+              {actionImagePreview && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Resolution Proof Image Preview
+                  </label>
+                  <div className="relative inline-block border border-slate-205 rounded-lg overflow-hidden p-1 bg-white">
+                    <img
+                      src={actionImagePreview}
+                      alt="Resolution Proof Preview"
+                      className="max-h-48 max-w-full rounded object-contain"
+                    />
+                    {actionImage && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActionImage(null);
+                          setActionImagePreview(null);
+                        }}
+                        className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full p-1 text-xs shadow-md"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="pt-4 border-t border-slate-100 flex justify-end space-x-4">
+                <button
+                  type="button"
+                  onClick={() => setModalOpen(false)}
+                  className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-semibold text-slate-755 hover:bg-slate-50 transition-colors"
+                >
+                  Close
+                </button>
+                <button
+                  type="submit"
+                  disabled={actionLoading}
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold shadow-md transition-colors disabled:opacity-50"
+                >
+                  {actionLoading ? (
+                    <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    'Save Updates'
+                  )}
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+};
+
+export default OfficerDashboard;

@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased font-sans;
+  }
+}
+
+/* Custom styles for government portal look */
+.gov-header-bg {
+  background: linear-gradient(135deg, #0f2d59 0%, #1d4ed8 100%);
+}
+
+.timeline-step-completed {
+  @apply bg-emerald-600 border-emerald-600 text-white;
+}
+
+.timeline-step-active {
+  @apply bg-blue-600 border-blue-600 text-white ring-4 ring-blue-100;
+}
+
+.timeline-step-pending {
+  @apply bg-white border-slate-300 text-slate-500;
+}
