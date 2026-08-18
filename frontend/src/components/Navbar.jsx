@@ -40,12 +40,12 @@ const Navbar = () => {
         <div className="flex justify-between h-16">
           {/* Logo & Platform Name */}
           <div className="flex items-center">
-            <Link to="/" className="flex items-center space-x-2.5">
-              <div className="bg-emerald-600 p-1.5 rounded-lg text-white">
+            <Link to="/" className="flex items-center space-x-2.5 group">
+              <div className="bg-emerald-600 p-1.5 rounded-lg text-white transition-transform duration-200 group-hover:scale-110 group-hover:shadow-md">
                 <Shield className="h-6 w-6" />
               </div>
               <div>
-                <span className="text-xl font-bold tracking-tight text-slate-900 block leading-tight">
+                <span className="text-xl font-bold tracking-tight text-slate-900 block leading-tight transition-colors duration-200 group-hover:text-emerald-700">
                   JanSamadhan
                 </span>
                 <span className="text-[10px] text-slate-500 font-medium block uppercase tracking-wider -mt-0.5">
@@ -61,13 +61,13 @@ const Navbar = () => {
                   <>
                     <Link
                       to="/dashboard"
-                      className="text-slate-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                      className="nav-link-underline text-slate-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
                     >
                       Dashboard
                     </Link>
                     <Link
                       to="/submit-complaint"
-                      className="text-slate-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                      className="nav-link-underline text-slate-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
                     >
                       File Complaint
                     </Link>
@@ -76,7 +76,7 @@ const Navbar = () => {
                 {user.role === 'Department Officer' && (
                   <Link
                     to="/officer"
-                    className="text-slate-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                    className="nav-link-underline text-slate-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
                   >
                     Officer Desk
                   </Link>
@@ -85,25 +85,25 @@ const Navbar = () => {
                   <>
                     <Link
                       to="/admin"
-                      className="text-slate-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                      className="nav-link-underline text-slate-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
                     >
                       Admin Dashboard
                     </Link>
                     <Link
                       to="/admin/users"
-                      className="text-slate-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                      className="nav-link-underline text-slate-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
                     >
                       Users
                     </Link>
                     <Link
                       to="/admin/categories"
-                      className="text-slate-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                      className="nav-link-underline text-slate-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
                     >
                       Categories
                     </Link>
                     <Link
                       to="/admin/logs"
-                      className="text-slate-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                      className="nav-link-underline text-slate-600 hover:text-blue-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
                     >
                       Logs
                     </Link>
@@ -121,7 +121,7 @@ const Navbar = () => {
                 <div className="relative">
                   <button
                     onClick={() => setShowNotifications(!showNotifications)}
-                    className="p-1.5 text-slate-500 hover:text-slate-700 rounded-full hover:bg-slate-100 transition-colors relative"
+                    className="btn-press p-1.5 text-slate-500 hover:text-blue-600 rounded-full hover:bg-blue-50 transition-colors relative"
                   >
                     <Bell className="h-5 w-5" />
                     {unreadCount > 0 && (
@@ -173,11 +173,11 @@ const Navbar = () => {
                   to="/profile"
                   className="hidden md:flex items-center space-x-2 pl-2 border-l border-slate-200 group"
                 >
-                  <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-semibold text-sm group-hover:bg-blue-200 transition-colors">
+                  <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 font-semibold text-sm transition-all duration-200 group-hover:bg-blue-200 group-hover:ring-2 group-hover:ring-blue-300">
                     {user.fullName.charAt(0).toUpperCase()}
                   </div>
                   <div className="text-left">
-                    <span className="text-xs font-semibold text-slate-800 block -mb-0.5 max-w-[120px] truncate">
+                    <span className="text-xs font-semibold text-slate-800 block -mb-0.5 max-w-[120px] truncate transition-colors group-hover:text-blue-700">
                       {user.fullName}
                     </span>
                     <span className="text-[10px] text-slate-500 font-medium block uppercase tracking-wider">
@@ -189,7 +189,7 @@ const Navbar = () => {
                 {/* Sign out */}
                 <button
                   onClick={handleLogout}
-                  className="p-1.5 text-slate-500 hover:text-slate-700 rounded-full hover:bg-slate-100 transition-colors hidden md:block"
+                  className="btn-press p-1.5 text-slate-500 hover:text-red-600 rounded-full hover:bg-red-50 transition-colors hidden md:block"
                   title="Sign Out"
                 >
                   <LogOut className="h-5 w-5" />
@@ -199,13 +199,13 @@ const Navbar = () => {
               <div className="hidden md:flex items-center space-x-2">
                 <Link
                   to="/login"
-                  className="text-slate-700 hover:text-blue-600 px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-colors"
+                  className="text-slate-700 hover:text-blue-600 px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-colors hover:bg-blue-50"
                 >
                   Login
                 </Link>
                 <Link
                   to="/register"
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-1.5 rounded-lg text-sm font-semibold shadow-sm transition-colors"
+                  className="btn-press bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-1.5 rounded-lg text-sm font-semibold shadow-sm hover:shadow-md transition-all duration-200"
                 >
                   Register
                 </Link>
