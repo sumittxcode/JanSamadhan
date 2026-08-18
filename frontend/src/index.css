@@ -1,8 +1,18 @@
 @import "tailwindcss";
 
 @layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     @apply bg-slate-50 text-slate-900 antialiased font-sans;
+  }
+
+  :focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 3px;
+    border-radius: 4px;
   }
 }
 
@@ -21,4 +31,42 @@
 
 .timeline-step-pending {
   @apply bg-white border-slate-300 text-slate-500;
+}
+
+/* Animated underline for nav links */
+.nav-link-underline {
+  position: relative;
+}
+.nav-link-underline::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  right: 50%;
+  height: 2px;
+  background: #2563eb;
+  border-radius: 9999px;
+  transition: left 0.22s ease, right 0.22s ease;
+}
+.nav-link-underline:hover::after,
+.nav-link-underline.active::after {
+  left: 8px;
+  right: 8px;
+}
+
+/* Footer item hover lift */
+.footer-hover-lift {
+  transition: transform 0.2s ease, color 0.2s ease;
+}
+.footer-hover-lift:hover {
+  transform: translateX(4px);
+  color: #e2e8f0;
+}
+
+/* Smooth button press effect */
+.btn-press {
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.btn-press:active {
+  transform: scale(0.96);
 }
