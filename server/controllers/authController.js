@@ -4,7 +4,7 @@ const Notification = require('../models/Notification');
 
 // Generate JWT Token
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET || 'jansamadhan_super_secret_key_12345', {
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: '30d'
   });
 };
