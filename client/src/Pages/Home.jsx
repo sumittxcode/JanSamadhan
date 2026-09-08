@@ -153,8 +153,8 @@ const Home = () => {
       {/* How It Works Section */}
       <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-slate-200/50">
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
-          <h2 className="text-3xl font-bold text-slate-955 tracking-tight">How the Platform Works</h2>
-          <p className="text-slate-650">We facilitate an open channel of communication between municipal offices and local citizens.</p>
+          <h2 className="text-3xl font-bold text-slate-900 tracking-tight">How the Platform Works</h2>
+          <p className="text-slate-600">We facilitate an open channel of communication between municipal offices and local citizens.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

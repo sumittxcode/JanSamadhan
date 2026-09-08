@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -23,11 +24,12 @@ import AdminLogs from './pages/AdminLogs';
 function App() {
   return (
     <AuthProvider>
-      <Router>
-        <div className="flex flex-col min-h-screen bg-slate-50 font-sans">
-          <Navbar />
-          
-          <main className="flex-grow">
+      <ToastProvider>
+        <Router>
+          <div className="flex flex-col min-h-screen bg-slate-50 font-sans">
+            <Navbar />
+            
+            <main className="flex-grow">
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<Home />} />
@@ -130,6 +132,7 @@ function App() {
           <Footer />
         </div>
       </Router>
+      </ToastProvider>
     </AuthProvider>
   );
 }
