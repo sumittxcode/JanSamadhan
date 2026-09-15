@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowLeft, Edit3, Image, Upload, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Edit3, Image, Upload, AlertCircle, X } from 'lucide-react';
+import { useToast } from '../context/ToastContext';
 
 const EditComplaint = () => {
   const { id } = useParams();
+  const toast = useToast();
+  const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
     title: '',
@@ -18,7 +21,6 @@ const EditComplaint = () => {
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
   const [error, setError] = useState('');
-  const navigate = useNavigate();
 
   const fallbackCategories = [
     'Road/Pothole',
@@ -37,7 +39,7 @@ const EditComplaint = () => {
         // Load categories
         const catRes = await axios.get('/api/categories');
         if (catRes.data.success) {
-          setCategories(catRes.data.categories.map(c => c.name));
+          setCategories(catRes.data.categories.map((c) => c.name));
         } else {
           setCategories(fallbackCategories);
         }
@@ -47,7 +49,7 @@ const EditComplaint = () => {
         if (compRes.data.success) {
           const c = compRes.data.complaint;
           if (c.status !== 'Pending') {
-            setError('Only pending complaints can be edited.');
+            setError('Only pending complaints can be edited before assignment.');
           }
           setFormData({
             title: c.title,
@@ -57,12 +59,13 @@ const EditComplaint = () => {
             priority: c.priority
           });
           if (c.image) {
-            setImagePreview(c.image); // Display current image
+            setImagePreview(c.image);
           }
         }
       } catch (err) {
         console.error(err);
         setError(err.response?.data?.message || 'Failed to fetch complaint details.');
+        toast.error('Could not load complaint');
       } finally {
         setFetching(false);
       }
@@ -96,7 +99,7 @@ const EditComplaint = () => {
     setError('');
 
     const { title, description, category, location } = formData;
-    if (!title || !description || !category || !location) {
+    if (!title.trim() || !description.trim() || !category || !location.trim()) {
       setError('Please fill in all required fields.');
       return;
     }
@@ -104,10 +107,10 @@ const EditComplaint = () => {
     setLoading(true);
 
     const submissionData = new FormData();
-    submissionData.append('title', title);
-    submissionData.append('description', description);
+    submissionData.append('title', title.trim());
+    submissionData.append('description', description.trim());
     submissionData.append('category', category);
-    submissionData.append('location', location);
+    submissionData.append('location', location.trim());
     submissionData.append('priority', formData.priority);
     if (image) {
       submissionData.append('image', image);
@@ -121,12 +124,13 @@ const EditComplaint = () => {
       });
 
       if (res.data.success) {
-        alert('Complaint updated successfully!');
+        toast.success('Complaint updated successfully!');
         navigate('/dashboard');
       }
     } catch (err) {
       console.error(err);
       setError(err.response?.data?.message || 'Failed to update complaint.');
+      toast.error('Update failed.');
     } finally {
       setLoading(false);
     }
@@ -134,8 +138,9 @@ const EditComplaint = () => {
 
   if (fetching) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-3">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+        <span className="text-slate-500 text-sm font-medium">Loading grievance data...</span>
       </div>
     );
   }
@@ -151,32 +156,34 @@ const EditComplaint = () => {
         <span>Back to Dashboard</span>
       </Link>
 
-      <div className="bg-white rounded-xl border border-slate-200/60 shadow-xl overflow-hidden">
-        {/* Banner Header */}
-        <div className="bg-slate-900 text-white px-6 py-5 flex items-center space-x-3 select-none">
-          <Edit3 className="h-6 w-6 text-amber-500" />
-          <div>
-            <h2 className="text-lg font-bold">Edit Grievance</h2>
-            <p className="text-xs text-slate-400">Update details of your pending complaint.</p>
+      {/* Main Card */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        {/* Header */}
+        <div className="gov-header-bg p-6 text-white select-none">
+          <div className="flex items-center space-x-2 text-blue-200 text-xs font-semibold uppercase tracking-wider mb-1">
+            <Edit3 className="h-4 w-4" />
+            <span>Grievance Modification</span>
           </div>
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight">Edit Pending Grievance</h1>
+          <p className="text-blue-100 text-xs sm:text-sm mt-1">
+            You can modify the complaint details, description, and attached photo while status is still Pending.
+          </p>
         </div>
 
-        {/* Error Alert */}
-        {error && (
-          <div className="mx-6 mt-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg flex items-start space-x-2.5">
-            <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
-            <p className="text-sm text-red-750 font-medium">{error}</p>
-          </div>
-        )}
+        {/* Form Body */}
+        <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6">
+          {error && (
+            <div className="bg-rose-50 border border-rose-200 p-4 rounded-xl flex items-start space-x-3">
+              <AlertCircle className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
+              <p className="text-sm text-rose-800 font-medium">{error}</p>
+            </div>
+          )}
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            {/* Complaint Title */}
+            {/* Title */}
             <div className="md:col-span-2">
-              <label htmlFor="title" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Complaint Title <span className="text-red-555">*</span>
+              <label htmlFor="title" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Grievance Title <span className="text-rose-500">*</span>
               </label>
               <input
                 id="title"
@@ -186,15 +193,14 @@ const EditComplaint = () => {
                 disabled={error.includes('Only pending')}
                 value={formData.title}
                 onChange={handleChange}
-                className="px-4 py-2.5 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
-                placeholder="Briefly state the issue"
+                className="px-4 py-2.5 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 transition-all font-sans"
               />
             </div>
 
             {/* Category Dropdown */}
             <div>
-              <label htmlFor="category" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Category <span className="text-red-500">*</span>
+              <label htmlFor="category" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Category <span className="text-rose-500">*</span>
               </label>
               <select
                 id="category"
@@ -203,19 +209,21 @@ const EditComplaint = () => {
                 disabled={error.includes('Only pending')}
                 value={formData.category}
                 onChange={handleChange}
-                className="px-4 py-2.5 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                className="px-4 py-2.5 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:bg-white focus:border-blue-500 transition-all font-sans"
               >
                 <option value="">-- Select Category --</option>
-                {categories.map((cat, i) => (
-                  <option key={i} value={cat}>{cat}</option>
+                {categories.map((cat, idx) => (
+                  <option key={idx} value={cat}>
+                    {cat}
+                  </option>
                 ))}
               </select>
             </div>
 
-            {/* Priority Dropdown */}
+            {/* Estimated Priority */}
             <div>
-              <label htmlFor="priority" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Estimated Priority
+              <label htmlFor="priority" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Urgency Level
               </label>
               <select
                 id="priority"
@@ -223,7 +231,7 @@ const EditComplaint = () => {
                 disabled={error.includes('Only pending')}
                 value={formData.priority}
                 onChange={handleChange}
-                className="px-4 py-2.5 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                className="px-4 py-2.5 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:bg-white focus:border-blue-500 transition-all font-sans"
               >
                 <option value="Low">Low</option>
                 <option value="Medium">Medium</option>
@@ -233,8 +241,8 @@ const EditComplaint = () => {
 
             {/* Location Address */}
             <div className="md:col-span-2">
-              <label htmlFor="location" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Precise Location / Landmark <span className="text-red-500">*</span>
+              <label htmlFor="location" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Precise Location / Landmark <span className="text-rose-500">*</span>
               </label>
               <input
                 id="location"
@@ -244,14 +252,14 @@ const EditComplaint = () => {
                 disabled={error.includes('Only pending')}
                 value={formData.location}
                 onChange={handleChange}
-                className="px-4 py-2.5 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                className="px-4 py-2.5 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:bg-white focus:border-blue-500 transition-all font-sans"
               />
             </div>
 
             {/* Detailed Description */}
             <div className="md:col-span-2">
-              <label htmlFor="description" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Detailed Description <span className="text-red-500">*</span>
+              <label htmlFor="description" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Detailed Description <span className="text-rose-500">*</span>
               </label>
               <textarea
                 id="description"
@@ -261,24 +269,24 @@ const EditComplaint = () => {
                 disabled={error.includes('Only pending')}
                 value={formData.description}
                 onChange={handleChange}
-                className="px-4 py-2.5 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                className="px-4 py-2.5 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:bg-white focus:border-blue-500 transition-all font-sans"
               ></textarea>
             </div>
 
             {/* Supporting Image Upload */}
             <div className="md:col-span-2">
-              <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                 Upload New Image (Optional, replaces existing)
               </label>
               <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-xl bg-slate-50/50 hover:bg-slate-50 hover:border-slate-400 transition-all">
-                <div className="space-y-1 text-center">
-                  <Upload className="mx-auto h-10 w-10 text-slate-400" />
-                  <div className="flex text-sm text-slate-650">
+                <div className="space-y-1.5 text-center">
+                  <Upload className="mx-auto h-9 w-9 text-slate-400" />
+                  <div className="flex text-sm text-slate-600 justify-center">
                     <label
                       htmlFor="image-upload"
-                      className="relative cursor-pointer bg-white rounded-md font-semibold text-blue-600 hover:text-blue-500 focus-within:outline-none"
+                      className="relative cursor-pointer bg-white rounded-md font-semibold text-blue-600 hover:text-blue-500 px-1"
                     >
-                      <span>Upload a file</span>
+                      <span>Choose file</span>
                       <input
                         id="image-upload"
                         name="image-upload"
@@ -289,7 +297,7 @@ const EditComplaint = () => {
                         onChange={handleImageChange}
                       />
                     </label>
-                    <p className="pl-1">or drag and drop</p>
+                    <p className="pl-1">or browse</p>
                   </div>
                   <p className="text-xs text-slate-400">PNG, JPG up to 5MB</p>
                 </div>
@@ -299,10 +307,10 @@ const EditComplaint = () => {
             {/* Image Preview */}
             {imagePreview && (
               <div className="md:col-span-2">
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Supporting Image (Current/New)
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Supporting Photograph
                 </label>
-                <div className="relative inline-block border border-slate-200 rounded-lg overflow-hidden p-1 bg-white">
+                <div className="relative inline-block border border-slate-200 rounded-lg overflow-hidden p-1 bg-white shadow-sm">
                   <img
                     src={imagePreview}
                     alt="Preview"
@@ -315,9 +323,9 @@ const EditComplaint = () => {
                         setImage(null);
                         setImagePreview(null);
                       }}
-                      className="absolute top-2 right-2 bg-red-650 hover:bg-red-700 text-white rounded-full p-1 text-xs shadow-md"
+                      className="absolute top-2 right-2 bg-rose-600 hover:bg-rose-700 text-white rounded-full p-1 text-xs shadow transition-colors"
                     >
-                      Remove
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   )}
                 </div>
@@ -326,7 +334,7 @@ const EditComplaint = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="pt-4 border-t border-slate-105 flex justify-end space-x-4">
+          <div className="pt-4 border-t border-slate-100 flex justify-end space-x-3">
             <Link
               to="/dashboard"
               className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
@@ -336,12 +344,12 @@ const EditComplaint = () => {
             <button
               type="submit"
               disabled={loading || error.includes('Only pending')}
-              className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold shadow-md transition-colors disabled:opacity-50"
+              className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold shadow transition-colors disabled:opacity-50 flex items-center space-x-2"
             >
               {loading ? (
-                <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               ) : (
-                'Save Changes'
+                <span>Save Changes</span>
               )}
             </button>
           </div>
