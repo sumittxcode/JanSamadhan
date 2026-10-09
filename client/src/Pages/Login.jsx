@@ -144,7 +144,6 @@ const Login = () => {
           </p>
           <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 text-left text-xs text-slate-500 space-y-1">
             <span className="font-bold text-slate-700 block uppercase tracking-wider mb-1">Demo Credentials:</span>
-            <p><span className="font-semibold">Admin:</span> admin@jansamadhan.gov.in / AdminPass123!</p>
             <p><span className="font-semibold">Officer:</span> officer@jansamadhan.gov.in / OfficerPass123!</p>
             <p><span className="font-semibold">Citizen:</span> (Please sign up a new account)</p>
           </div>

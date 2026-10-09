@@ -17,16 +17,35 @@ import {
   Mail,
   User,
   Building,
-  AlertTriangle
+  AlertTriangle,
+  BarChart3,
+  Flame
 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
+import AnalyticsCard from '../Components/Analytics/AnalyticsCard';
+import StatusDonutChart from '../Components/Analytics/StatusDonutChart';
+import PriorityBarChart from '../Components/Analytics/PriorityBarChart';
 
 const OfficerDashboard = () => {
   const toast = useToast();
   const [complaints, setComplaints] = useState([]);
-  const [metrics, setMetrics] = useState({ total: 0, pending: 0, active: 0, resolved: 0 });
+  const [metrics, setMetrics] = useState({
+    total: 0,
+    pending: 0,
+    active: 0,
+    inProgress: 0,
+    resolved: 0,
+    rejected: 0,
+    highPriority: 0,
+    mediumPriority: 0,
+    lowPriority: 0,
+    resolutionPercentage: 0,
+    avgResolutionDays: 0,
+    statusDistribution: [],
+    priorityDistribution: []
+  });
   const [loading, setLoading] = useState(true);
-  
+
   // Search & Filter state
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -64,7 +83,7 @@ const OfficerDashboard = () => {
       }
     } catch (err) {
       console.error('Failed to load Officer dashboard:', err);
-      toast.error('Failed to retrieve assigned tasks');
+      if (toast?.error) toast.error('Failed to retrieve assigned tasks');
     } finally {
       setLoading(false);
     }
@@ -127,14 +146,14 @@ const OfficerDashboard = () => {
       });
 
       if (res.data.success) {
-        toast.success(`Complaint ${selectedComplaint.complaintId} status updated to ${actionStatus}`);
+        if (toast?.success) toast.success(`Complaint ${selectedComplaint.complaintId} status updated to ${actionStatus}`);
         setModalOpen(false);
         initDashboard();
       }
     } catch (err) {
       console.error('Action Submit Error:', err);
       setActionError(err.response?.data?.message || 'Failed to update task.');
-      toast.error('Update failed');
+      if (toast?.error) toast.error('Update failed');
     } finally {
       setActionLoading(false);
     }
@@ -187,45 +206,82 @@ const OfficerDashboard = () => {
       </div>
 
       {/* Metrics Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4">
-          <div className="p-3 bg-slate-100 text-slate-700 rounded-lg">
-            <ClipboardList className="h-6 w-6" />
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 mb-8">
+        <AnalyticsCard
+          title="Total Tickets"
+          value={metrics.total}
+          subtitle="Department jurisdiction"
+          icon={ClipboardList}
+          color="slate"
+        />
+        <AnalyticsCard
+          title="Pending Tasks"
+          value={metrics.pending}
+          subtitle="Awaiting resolution"
+          icon={Clock}
+          color="amber"
+        />
+        <AnalyticsCard
+          title="In Progress"
+          value={metrics.inProgress || metrics.active}
+          subtitle="Under active investigation"
+          icon={AlertTriangle}
+          color="blue"
+        />
+        <AnalyticsCard
+          title="Resolved"
+          value={metrics.resolved}
+          subtitle={`${metrics.resolutionPercentage}% resolution rate`}
+          icon={CheckCircle2}
+          color="emerald"
+        />
+        <AnalyticsCard
+          title="High Priority"
+          value={metrics.highPriority}
+          subtitle="Urgent SLA tasks"
+          icon={Flame}
+          color="red"
+        />
+        <AnalyticsCard
+          title="Avg Turnaround"
+          value={metrics.avgResolutionDays > 0 ? `${metrics.avgResolutionDays}d` : 'N/A'}
+          subtitle={metrics.avgResolutionDays > 0 ? 'Days to resolution' : 'Pending resolved data'}
+          icon={Clock}
+          color="purple"
+        />
+      </div>
+
+      {/* Role-Specific Officer Analytics Section */}
+      <div className="mb-8 space-y-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+          <div className="flex items-center space-x-2">
+            <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
+              <BarChart3 className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">Officer Workload &amp; SLA Analytics</h2>
+              <p className="text-xs text-slate-500">Live operational telemetry for complaints assigned to you or your department.</p>
+            </div>
           </div>
-          <div>
-            <span className="text-2xl font-black text-slate-900 block">{metrics.total}</span>
-            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Total Tickets</span>
+          <div className="mt-2 sm:mt-0 flex items-center space-x-2 text-xs">
+            <span className="font-semibold text-slate-600">Redressal Efficiency:</span>
+            <span className="px-2.5 py-0.5 rounded-full font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              {metrics.resolutionPercentage}% Resolved
+            </span>
           </div>
         </div>
 
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4">
-          <div className="p-3 bg-amber-50 text-amber-600 rounded-lg">
-            <Clock className="h-6 w-6" />
-          </div>
-          <div>
-            <span className="text-2xl font-black text-slate-900 block">{metrics.pending}</span>
-            <span className="text-xs text-amber-600 font-bold uppercase tracking-wider">Pending tasks</span>
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4">
-          <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
-            <AlertTriangle className="h-6 w-6 text-blue-600" />
-          </div>
-          <div>
-            <span className="text-2xl font-black text-slate-900 block">{metrics.active}</span>
-            <span className="text-xs text-blue-600 font-bold uppercase tracking-wider">In Progress</span>
-          </div>
-        </div>
-
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4">
-          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg">
-            <CheckCircle2 className="h-6 w-6" />
-          </div>
-          <div>
-            <span className="text-2xl font-black text-slate-900 block">{metrics.resolved}</span>
-            <span className="text-xs text-emerald-600 font-bold uppercase tracking-wider">Resolved Tickets</span>
-          </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <StatusDonutChart
+            data={metrics.statusDistribution}
+            title="Task Status Distribution"
+            subtitle="Breakdown of assigned tickets across progress stages"
+          />
+          <PriorityBarChart
+            data={metrics.priorityDistribution}
+            title="Assigned Priority Breakdown"
+            subtitle="Urgency classification of tickets in your queue"
+          />
         </div>
       </div>
 

@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
-const Notification = require('../models/Notification');
+const { sendNotification } = require('../utils/notificationService');
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -21,13 +21,17 @@ exports.signup = async (req, res) => {
       return res.status(400).json({ success: false, message: 'User already exists with this email' });
     }
 
-    // Citizens cannot sign up directly as Admin or Officer. Let's restrict it
-    // but default to Citizen unless configured.
+    // Enforce security: Administrator accounts can NEVER be created via public signup
+    if (role === 'Administrator') {
+      return res.status(403).json({
+        success: false,
+        message: 'Security Violation: Administrator accounts cannot be created via public registration.'
+      });
+    }
+
     let userRole = 'Citizen';
-    if (role && ['Citizen', 'Department Officer', 'Administrator'].includes(role)) {
-      // In a real application, officers and admins are created by admin, 
-      // but for demonstration and testing, we will allow selecting roles
-      userRole = role;
+    if (role === 'Department Officer') {
+      userRole = 'Department Officer';
     }
 
     const user = await User.create({
@@ -41,10 +45,10 @@ exports.signup = async (req, res) => {
     });
 
     // Create a welcome notification
-    await Notification.create({
-      userId: user._id,
-      message: `Welcome to JanSamadhan, ${user.fullName}! Your account has been registered successfully.`
-    });
+    await sendNotification(
+      user._id,
+      `Welcome to JanSamadhan, ${user.fullName}! Your account has been registered successfully.`
+    );
 
     res.status(201).json({
       success: true,

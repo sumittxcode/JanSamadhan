@@ -5,10 +5,18 @@ const {
   getMyComplaints,
   getComplaintById,
   updateComplaint,
-  deleteComplaint
+  deleteComplaint,
+  categorizeComplaint,
+  getMyAnalytics
 } = require('../controllers/complaintController');
 const { protect } = require('../middleware/auth');
 const upload = require('../middleware/upload');
+
+// AI Categorization endpoint
+router.post('/ai-categorize', protect, categorizeComplaint);
+
+// Citizen Analytics endpoint
+router.get('/my/analytics', protect, getMyAnalytics);
 
 router.route('/')
   .post(protect, upload.single('image'), createComplaint);
