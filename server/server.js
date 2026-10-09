@@ -32,6 +32,7 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/complaints', require('./routes/complaintRoutes'));
 app.use('/api/officer', require('./routes/officerRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/analytics', require('./routes/analyticsRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
 
 // Error handling middleware
@@ -78,8 +79,9 @@ const seedDatabase = async () => {
       }
     }
 
-    // 3. Seed Default Admin User
-    const adminEmail = 'admin@jansamadhan.gov.in';
+    // 3. Seed Initial Administrator Account (Configured via Server Environment Variables)
+    const adminEmail = process.env.ADMIN_EMAIL || 'admin@jansamadhan.gov.in';
+    const adminPassword = process.env.ADMIN_PASSWORD || 'AdminPass123!';
     const adminExists = await User.findOne({ email: adminEmail });
     if (!adminExists) {
       await User.create({
@@ -87,10 +89,10 @@ const seedDatabase = async () => {
         email: adminEmail,
         phone: '9999999999',
         address: 'JanSamadhan Central Grievance Redressal HQ, New Delhi',
-        password: 'AdminPass123!', // Note: userSchema pre('save') hashes this automatically
+        password: adminPassword, // Automatically hashed by User model pre('save') hook
         role: 'Administrator'
       });
-      console.log(`Seeded Default Admin User: ${adminEmail} (password: AdminPass123!)`);
+      console.log(`Initialized Administrator account: ${adminEmail}`);
     }
 
     // 4. Seed Default Officer User (to make testing easy)

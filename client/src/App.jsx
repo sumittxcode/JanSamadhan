@@ -20,6 +20,7 @@ import AdminDashboard from './pages/AdminDashboard';
 import AdminUsers from './pages/AdminUsers';
 import AdminCategories from './pages/AdminCategories';
 import AdminLogs from './pages/AdminLogs';
+import AdminLogin from './pages/AdminLogin';
 
 function App() {
   return (
@@ -34,6 +35,7 @@ function App() {
               {/* Public Routes */}
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/admin-login" element={<AdminLogin />} />
               <Route path="/register" element={<Register />} />
 
               {/* Citizen Routes */}

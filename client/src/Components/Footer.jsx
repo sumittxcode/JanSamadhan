@@ -1,5 +1,6 @@
 import React from 'react';
-import { Landmark, Phone, Mail, Shield, CheckCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Landmark, Phone, Mail, Shield, CheckCircle, Lock } from 'lucide-react';
 
 const Footer = () => {
   return (
@@ -51,6 +52,12 @@ const Footer = () => {
               <li>
                 <a href="#disclaimer" className="footer-hover-lift inline-flex items-center gap-1 hover:text-white transition-colors">Website Disclaimer &amp; Guidelines</a>
               </li>
+              <li>
+                <Link to="/admin-login" className="footer-hover-lift inline-flex items-center gap-1 text-slate-400 hover:text-blue-400 transition-colors">
+                  <Lock className="h-3 w-3" />
+                  <span>Admin Portal</span>
+                </Link>
+              </li>
               <li className="text-[11px] text-slate-500 mt-2">
                 Designed under the guidelines of national grievance tracking systems.
               </li>
@@ -65,6 +72,11 @@ const Footer = () => {
             <span>Powered by Digital India</span>
             <span>•</span>
             <span>NIC Certified Secure</span>
+            <span>•</span>
+            <Link to="/admin-login" className="hover:text-blue-400 transition-colors flex items-center gap-1">
+              <Lock className="h-3 w-3" />
+              <span>Admin Portal</span>
+            </Link>
           </div>
         </div>
       </div>

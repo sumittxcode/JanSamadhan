@@ -19,23 +19,48 @@ import {
   ArrowUpRight,
   BarChart3,
   Building2,
-  RefreshCw
+  RefreshCw,
+  Flame,
+  TrendingUp
 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
+import AnalyticsCard from '../Components/Analytics/AnalyticsCard';
+import StatusDonutChart from '../Components/Analytics/StatusDonutChart';
+import PriorityBarChart from '../Components/Analytics/PriorityBarChart';
+import ComplaintTrendChart from '../Components/Analytics/ComplaintTrendChart';
+import DepartmentChart from '../Components/Analytics/DepartmentChart';
+import OfficerWorkloadChart from '../Components/Analytics/OfficerWorkloadChart';
 
 const AdminDashboard = () => {
   const toast = useToast();
   const [metrics, setMetrics] = useState({
     total: 0,
+    totalComplaints: 0,
+    totalCitizens: 0,
+    totalOfficers: 0,
+    totalDepartments: 0,
     pending: 0,
+    pendingComplaints: 0,
+    underReviewComplaints: 0,
     assigned: 0,
+    assignedComplaints: 0,
     inProgress: 0,
+    inProgressComplaints: 0,
     resolved: 0,
+    resolvedComplaints: 0,
     rejected: 0,
+    rejectedComplaints: 0,
+    highPriorityComplaints: 0,
+    mediumPriorityComplaints: 0,
+    lowPriorityComplaints: 0,
     resolutionPercentage: 0,
+    resolvedVsUnresolved: { resolved: 0, unresolved: 0 },
+    statusDistribution: [],
+    priorityDistribution: [],
     categoryStats: [],
+    monthlyStats: [],
     departmentStats: [],
-    monthlyStats: []
+    officerWorkload: []
   });
   const [complaints, setComplaints] = useState([]);
   const [officers, setOfficers] = useState([]);
@@ -101,11 +126,11 @@ const AdminDashboard = () => {
       }
 
       if (isManualRefresh) {
-        toast.success('Admin dashboard refreshed');
+        if (toast?.success) toast.success('Admin dashboard refreshed');
       }
     } catch (err) {
       console.error('Failed to load Admin Dashboard data:', err);
-      toast.error('Failed to retrieve telemetry data');
+      if (toast?.error) toast.error('Failed to retrieve telemetry data');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -142,7 +167,7 @@ const AdminDashboard = () => {
   const handleAssignSubmit = async (e) => {
     e.preventDefault();
     if (!assignDept) {
-      toast.warning('Please select a responsible department.');
+      if (toast?.warning) toast.warning('Please select a responsible department.');
       return;
     }
 
@@ -154,12 +179,12 @@ const AdminDashboard = () => {
         priority: assignPriority
       });
       if (res.data.success) {
-        toast.success(`Complaint ${selectedComplaint.complaintId} assigned successfully!`);
+        if (toast?.success) toast.success(`Complaint ${selectedComplaint.complaintId} assigned successfully!`);
         setAssignModalOpen(false);
         initAdminData();
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Assignment failed.');
+      if (toast?.error) toast.error(err.response?.data?.message || 'Assignment failed.');
     } finally {
       setAssignLoading(false);
     }
@@ -176,7 +201,7 @@ const AdminDashboard = () => {
   const handleRejectSubmit = async (e) => {
     e.preventDefault();
     if (!rejectRemarks.trim()) {
-      toast.warning('Please provide a reason for rejecting this grievance.');
+      if (toast?.warning) toast.warning('Please provide a reason for rejecting this grievance.');
       return;
     }
     setRejectLoading(true);
@@ -185,12 +210,12 @@ const AdminDashboard = () => {
         remarks: rejectRemarks
       });
       if (res.data.success) {
-        toast.info(`Complaint ${selectedComplaint.complaintId} marked as rejected.`);
+        if (toast?.info) toast.info(`Complaint ${selectedComplaint.complaintId} marked as rejected.`);
         setRejectModalOpen(false);
         initAdminData();
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Rejection failed.');
+      if (toast?.error) toast.error(err.response?.data?.message || 'Rejection failed.');
     } finally {
       setRejectLoading(false);
     }
@@ -198,7 +223,7 @@ const AdminDashboard = () => {
 
   // Export CSV Helper
   const handleExportCSV = () => {
-    toast.info('Downloading grievance analytics export...');
+    if (toast?.info) toast.info('Downloading grievance analytics export...');
     window.open('/api/admin/export-csv', '_blank');
   };
 
@@ -283,185 +308,136 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Analytics KPI Metric Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {/* Total */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Filed</span>
-            <div className="p-2 bg-slate-100 text-slate-700 rounded-lg">
-              <ClipboardList className="h-4 w-4" />
-            </div>
-          </div>
-          <span className="text-2xl font-black text-slate-900 block mt-2">{metrics.total}</span>
-          <span className="text-[11px] text-slate-400 font-medium">Platform-wide grievances</span>
-        </div>
-
-        {/* Pending */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-amber-600 uppercase tracking-wider">Unassigned</span>
-            <div className="p-2 bg-amber-50 text-amber-600 rounded-lg">
-              <Clock className="h-4 w-4" />
-            </div>
-          </div>
-          <span className="text-2xl font-black text-slate-900 block mt-2">{metrics.pending}</span>
-          <span className="text-[11px] text-amber-600 font-medium">Awaiting routing</span>
-        </div>
-
-        {/* Assigned */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Assigned</span>
-            <div className="p-2 bg-indigo-50 text-indigo-600 rounded-lg">
-              <UserCheck className="h-4 w-4" />
-            </div>
-          </div>
-          <span className="text-2xl font-black text-slate-900 block mt-2">{metrics.assigned}</span>
-          <span className="text-[11px] text-indigo-600 font-medium">Allocated to desk</span>
-        </div>
-
-        {/* In Progress */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-blue-600 uppercase tracking-wider">In Progress</span>
-            <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-              <AlertTriangle className="h-4 w-4 animate-pulse" />
-            </div>
-          </div>
-          <span className="text-2xl font-black text-slate-900 block mt-2">{metrics.inProgress}</span>
-          <span className="text-[11px] text-blue-600 font-medium">Field investigation</span>
-        </div>
-
-        {/* Resolved */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Resolved</span>
-            <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
-              <CheckCircle2 className="h-4 w-4" />
-            </div>
-          </div>
-          <span className="text-2xl font-black text-slate-900 block mt-2">{metrics.resolved}</span>
-          <span className="text-[11px] text-emerald-600 font-medium">
-            {metrics.resolutionPercentage}% resolution rate
-          </span>
-        </div>
-
-        {/* Rejected */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-rose-600 uppercase tracking-wider">Rejected</span>
-            <div className="p-2 bg-rose-50 text-rose-600 rounded-lg">
-              <ShieldAlert className="h-4 w-4" />
-            </div>
-          </div>
-          <span className="text-2xl font-black text-slate-900 block mt-2">{metrics.rejected}</span>
-          <span className="text-[11px] text-rose-600 font-medium">Non-jurisdictional</span>
-        </div>
+      {/* High-Level Control Room Statistics Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+        <AnalyticsCard
+          title="Citizens Registered"
+          value={metrics.totalCitizens || 0}
+          subtitle="Active public accounts"
+          icon={Users}
+          color="blue"
+        />
+        <AnalyticsCard
+          title="Department Officers"
+          value={metrics.totalOfficers || officers.length}
+          subtitle="Redressal officers"
+          icon={UserCheck}
+          color="purple"
+        />
+        <AnalyticsCard
+          title="Active Departments"
+          value={metrics.totalDepartments || departmentsList.length}
+          subtitle="Civic operational wings"
+          icon={Building2}
+          color="slate"
+        />
+        <AnalyticsCard
+          title="Total Complaints"
+          value={metrics.totalComplaints || metrics.total || complaints.length}
+          subtitle="Master catalogue"
+          icon={ClipboardList}
+          color="slate"
+        />
+        <AnalyticsCard
+          title="Pending Complaints"
+          value={metrics.pendingComplaints || metrics.pending}
+          subtitle="Awaiting triage"
+          icon={Clock}
+          color="amber"
+        />
+        <AnalyticsCard
+          title="Under Review"
+          value={metrics.underReviewComplaints || 0}
+          subtitle="Department review"
+          icon={Clock}
+          color="purple"
+        />
+        <AnalyticsCard
+          title="Assigned to Officer"
+          value={metrics.assignedComplaints || metrics.assigned}
+          subtitle="Officer allocated"
+          icon={AlertTriangle}
+          color="blue"
+        />
+        <AnalyticsCard
+          title="In Progress"
+          value={metrics.inProgressComplaints || metrics.inProgress}
+          subtitle="Active on-ground work"
+          icon={AlertTriangle}
+          color="blue"
+        />
+        <AnalyticsCard
+          title="Resolved Cases"
+          value={metrics.resolvedComplaints || metrics.resolved}
+          subtitle={`${metrics.resolutionPercentage}% global SLA`}
+          icon={CheckCircle2}
+          color="emerald"
+        />
+        <AnalyticsCard
+          title="High Priority"
+          value={metrics.highPriorityComplaints || 0}
+          subtitle="Urgent public hazards"
+          icon={Flame}
+          color="red"
+        />
       </div>
 
-      {/* Visual Analytics & SLA Telemetry Breakdown */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Category Breakdown Progress */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <div className="flex items-center space-x-2">
-              <Layers className="h-4 w-4 text-slate-500" />
-              <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Complaints by Category</h3>
+      {/* Admin Visual Analytics & Reports Section */}
+      <div className="space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-200 pb-3">
+          <div className="flex items-center space-x-2">
+            <div className="p-2 bg-blue-50 text-blue-700 rounded-lg">
+              <BarChart3 className="h-5 w-5" />
             </div>
-            <span className="text-xs font-semibold text-slate-500">{metrics.categoryStats.length} Categories</span>
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">System-Wide Analytics &amp; Reports</h2>
+              <p className="text-xs text-slate-500">Real-time MongoDB aggregated data visualizations and telemetry across all municipal domains.</p>
+            </div>
           </div>
-
-          <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
-            {metrics.categoryStats.length === 0 ? (
-              <span className="text-xs text-slate-400 block text-center py-8">No category records.</span>
-            ) : (
-              metrics.categoryStats.map((stat, idx) => {
-                const percentage = metrics.total > 0 ? Math.round((stat.value / metrics.total) * 100) : 0;
-                return (
-                  <div key={idx} className="space-y-1">
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="font-semibold text-slate-700 truncate max-w-[170px]">{stat.name}</span>
-                      <span className="text-slate-500 font-medium">{stat.value} ({percentage}%)</span>
-                    </div>
-                    <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                      <div
-                        className="bg-blue-600 h-full rounded-full transition-all duration-500"
-                        style={{ width: `${percentage}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                );
-              })
-            )}
+          <div className="mt-2 sm:mt-0 flex items-center space-x-2 text-xs">
+            <span className="font-semibold text-slate-600">National Redressal Rate:</span>
+            <span className="px-3 py-1 rounded-full font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              {metrics.resolutionPercentage}% Resolved
+            </span>
           </div>
         </div>
 
-        {/* Department SLA & Performance Metrics */}
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-            <div className="flex items-center space-x-2">
-              <Building2 className="h-4 w-4 text-slate-500" />
-              <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                Department Resolution & SLA Performance
-              </h3>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="text-xs text-slate-500">Global Resolution:</span>
-              <span className="px-2 py-0.5 rounded text-xs font-bold bg-emerald-100 text-emerald-800">
-                {metrics.resolutionPercentage}%
-              </span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 max-h-64 overflow-y-auto pr-1">
-            {metrics.departmentStats.length === 0 ? (
-              <span className="text-xs text-slate-400 block text-center py-8 sm:col-span-2">
-                No department telemetry recorded yet.
-              </span>
-            ) : (
-              metrics.departmentStats.map((dept, i) => (
-                <div
-                  key={i}
-                  className="bg-slate-50/80 p-3.5 rounded-lg border border-slate-200/70 hover:border-slate-300 transition-colors space-y-2"
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <span className="font-bold text-slate-900 text-xs block truncate max-w-[160px]">
-                        {dept.department || 'Unassigned'}
-                      </span>
-                      <span className="text-slate-400 text-[11px] block mt-0.5">
-                        {dept.resolved} of {dept.total} resolved
-                      </span>
-                    </div>
-                    <span
-                      className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                        dept.rate >= 75
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : dept.rate >= 40
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-rose-100 text-rose-800'
-                      }`}
-                    >
-                      {dept.rate}% SLA
-                    </span>
-                  </div>
-
-                  <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all duration-500 ${
-                        dept.rate >= 75 ? 'bg-emerald-500' : dept.rate >= 40 ? 'bg-amber-500' : 'bg-rose-500'
-                      }`}
-                      style={{ width: `${dept.rate}%` }}
-                    ></div>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+        {/* Row 1: Status Distribution & Priority Breakdown */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <StatusDonutChart
+            data={metrics.statusDistribution}
+            title="System-Wide Grievance Status"
+            subtitle="Full distribution of registered civic issues across lifecycle stages"
+          />
+          <PriorityBarChart
+            data={metrics.priorityDistribution}
+            title="Complaint Priority Distribution"
+            subtitle="Severity and urgency rating assigned across all grievances"
+          />
         </div>
 
+        {/* Row 2: Inflow Trend & Department Performance */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ComplaintTrendChart
+            data={metrics.monthlyStats}
+            title="Monthly Grievance Inflow Trends"
+            subtitle="Complaint submission cadence over chronological months"
+          />
+          <DepartmentChart
+            data={metrics.departmentStats}
+            title="Complaints by Department &amp; SLA Performance"
+            subtitle="Total workload versus resolved grievances by department"
+          />
+        </div>
+
+        {/* Row 3: Officer Workload */}
+        <div>
+          <OfficerWorkloadChart
+            data={metrics.officerWorkload}
+            title="Department Officer Assignment &amp; Workload Distribution"
+            subtitle="Tracking individual officer ticket load, active tasks, and resolution performance"
+          />
+        </div>
       </div>
 
       {/* Quick Status Filter Tabs */}
@@ -673,17 +649,19 @@ const AdminDashboard = () => {
               </button>
             </div>
 
-            <form onSubmit={handleAssignSubmit} className="p-6 space-y-4">
-              {/* Complaint Brief */}
-              <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs space-y-1">
-                <p className="font-semibold text-slate-800 truncate">{selectedComplaint.title}</p>
-                <p className="text-slate-500">Location: {selectedComplaint.location}</p>
+            <form onSubmit={handleAssignSubmit} className="p-6 space-y-5">
+              {/* Complaint Summary Context */}
+              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/70 text-xs space-y-1">
+                <p><span className="font-semibold text-slate-700">Complaint:</span> {selectedComplaint.title}</p>
+                <p><span className="font-semibold text-slate-700">Location:</span> {selectedComplaint.location}</p>
+                <p><span className="font-semibold text-slate-700">Reported Category:</span> {selectedComplaint.category}</p>
+                <p><span className="font-semibold text-slate-700">Citizen:</span> {selectedComplaint.citizenId?.fullName} ({selectedComplaint.citizenId?.email || 'N/A'})</p>
               </div>
 
-              {/* Department Selection */}
+              {/* Department */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Target Department <span className="text-rose-500">*</span>
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  1. Target Department <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={assignDept}
@@ -704,11 +682,11 @@ const AdminDashboard = () => {
               {/* Specific Officer Selection with Workload Indication */}
               <div>
                 <div className="flex justify-between items-center mb-1.5">
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Designated Officer {assignDept ? `(${assignDept})` : ''}
+                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                    2. Designated Officer {assignDept ? `(${assignDept})` : ''}
                   </label>
-                  <span className="text-[11px] text-slate-400 font-medium">
-                    {filteredOfficers.length} officer(s) available
+                  <span className="text-[11px] text-slate-500">
+                    {filteredOfficers.length} Available
                   </span>
                 </div>
 
@@ -722,29 +700,31 @@ const AdminDashboard = () => {
                     const activeCount = officerWorkload[o._id] || 0;
                     return (
                       <option key={o._id} value={o._id}>
-                        {o.fullName} • {o.department || 'General'} ({activeCount} active tickets)
+                        {o.fullName} • {o.email} ({o.department || 'General'}) — [{activeCount} active tasks]
                       </option>
                     );
                   })}
                 </select>
-                <p className="text-[11px] text-slate-500 mt-1">
-                  Active ticket workload is shown in parentheses to help balance distribution.
-                </p>
+                {assignDept && filteredOfficers.length === 0 && (
+                  <p className="text-[11px] text-amber-600 mt-1">
+                    No dedicated officer registered in '{assignDept}'. You can assign department directly or select a general officer.
+                  </p>
+                )}
               </div>
 
               {/* Priority Override */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Grievance Priority Level
+                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                  3. Grievance Priority Level
                 </label>
                 <select
                   value={assignPriority}
                   onChange={(e) => setAssignPriority(e.target.value)}
                   className="px-3.5 py-2 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:bg-white focus:border-blue-500 transition-all font-sans"
                 >
-                  <option value="Low">Low - Routine</option>
-                  <option value="Medium">Medium - Standard SLA</option>
-                  <option value="High">High - Emergency / Urgent</option>
+                  <option value="Low">Low Priority (Standard SLA)</option>
+                  <option value="Medium">Medium Priority (Expedited)</option>
+                  <option value="High">High Priority (Urgent Public Safety)</option>
                 </select>
               </div>
 

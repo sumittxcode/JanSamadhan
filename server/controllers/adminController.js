@@ -2,7 +2,7 @@ const User = require('../models/User');
 const Complaint = require('../models/Complaint');
 const ComplaintCategory = require('../models/ComplaintCategory');
 const ActivityLog = require('../models/ActivityLog');
-const Notification = require('../models/Notification');
+const { sendNotification } = require('../utils/notificationService');
 
 // Helper to log activities
 const logActivity = async (action, performedBy, complaintId, details) => {
@@ -13,28 +13,30 @@ const logActivity = async (action, performedBy, complaintId, details) => {
   }
 };
 
-// Helper to send notifications
-const sendNotification = async (userId, message) => {
-  try {
-    await Notification.create({ userId, message });
-  } catch (error) {
-    console.error('Failed to send notification:', error);
-  }
-};
-
 // ==========================================
 // 1. DASHBOARD & ANALYTICS
 // ==========================================
 exports.getAdminDashboardMetrics = async (req, res) => {
   try {
-    // Basic counts
+    // High-level User Counts
+    const totalCitizens = await User.countDocuments({ role: 'Citizen' });
+    const totalOfficers = await User.countDocuments({ role: 'Department Officer' });
+    const totalDepartmentsCount = await ComplaintCategory.countDocuments();
+    const totalDepartments = totalDepartmentsCount > 0 ? totalDepartmentsCount : 7;
+
+    // Complaint Status Counts
     const total = await Complaint.countDocuments();
-    const pending = await Complaint.countDocuments({ status: 'Pending' });
-    const underReview = await Complaint.countDocuments({ status: 'Under Review' });
-    const assigned = await Complaint.countDocuments({ status: 'Assigned' });
-    const inProgress = await Complaint.countDocuments({ status: 'In Progress' });
-    const resolved = await Complaint.countDocuments({ status: 'Resolved' });
-    const rejected = await Complaint.countDocuments({ status: 'Rejected' });
+    const pendingComplaints = await Complaint.countDocuments({ status: 'Pending' });
+    const underReviewComplaints = await Complaint.countDocuments({ status: 'Under Review' });
+    const assignedComplaints = await Complaint.countDocuments({ status: 'Assigned' });
+    const inProgressComplaints = await Complaint.countDocuments({ status: 'In Progress' });
+    const resolvedComplaints = await Complaint.countDocuments({ status: 'Resolved' });
+    const rejectedComplaints = await Complaint.countDocuments({ status: 'Rejected' });
+
+    // Complaint Priority Counts
+    const highPriorityComplaints = await Complaint.countDocuments({ priority: 'High' });
+    const mediumPriorityComplaints = await Complaint.countDocuments({ priority: 'Medium' });
+    const lowPriorityComplaints = await Complaint.countDocuments({ priority: 'Low' });
 
     // Complaints by Category
     const categoryStats = await Complaint.aggregate([
@@ -43,7 +45,8 @@ exports.getAdminDashboardMetrics = async (req, res) => {
           _id: '$category',
           count: { $sum: 1 }
         }
-      }
+      },
+      { $sort: { count: -1 } }
     ]);
 
     // Monthly trends (group by month/year)
@@ -57,11 +60,11 @@ exports.getAdminDashboardMetrics = async (req, res) => {
           count: { $sum: 1 }
         }
       },
-      { $sort: { '_id.year': -1, '_id.month': -1 } },
+      { $sort: { '_id.year': 1, '_id.month': 1 } },
       { $limit: 12 }
     ]);
 
-    // Department performance (Average resolution rate/count per department)
+    // Department performance
     const departmentStats = await Complaint.aggregate([
       {
         $group: {
@@ -71,33 +74,109 @@ exports.getAdminDashboardMetrics = async (req, res) => {
             $sum: { $cond: [{ $eq: ['$status', 'Resolved'] }, 1, 0] }
           }
         }
-      }
+      },
+      { $sort: { total: -1 } }
     ]);
 
+    // Officer Workload Analysis
+    const officerWorkload = await Complaint.aggregate([
+      { $match: { assignedOfficer: { $ne: null } } },
+      {
+        $group: {
+          _id: '$assignedOfficer',
+          totalAssigned: { $sum: 1 },
+          active: {
+            $sum: { $cond: [{ $in: ['$status', ['Assigned', 'In Progress', 'Under Review']] }, 1, 0] }
+          },
+          resolved: {
+            $sum: { $cond: [{ $eq: ['$status', 'Resolved'] }, 1, 0] }
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'officer'
+        }
+      },
+      { $unwind: '$officer' },
+      {
+        $project: {
+          officerId: '$_id',
+          name: '$officer.fullName',
+          department: '$officer.department',
+          totalAssigned: 1,
+          active: 1,
+          resolved: 1
+        }
+      },
+      { $sort: { totalAssigned: -1 } },
+      { $limit: 8 }
+    ]);
+
+    // Status Distribution
+    const statusDistribution = [
+      { name: 'Resolved', count: resolvedComplaints, color: '#10b981' },
+      { name: 'In Progress', count: inProgressComplaints, color: '#3b82f6' },
+      { name: 'Assigned', count: assignedComplaints, color: '#6366f1' },
+      { name: 'Under Review', count: underReviewComplaints, color: '#a855f7' },
+      { name: 'Pending', count: pendingComplaints, color: '#f59e0b' },
+      { name: 'Rejected', count: rejectedComplaints, color: '#ef4444' }
+    ];
+
+    // Priority Distribution
+    const priorityDistribution = [
+      { priority: 'High', count: highPriorityComplaints, color: '#ef4444' },
+      { priority: 'Medium', count: mediumPriorityComplaints, color: '#f59e0b' },
+      { priority: 'Low', count: lowPriorityComplaints, color: '#64748b' }
+    ];
+
     // Resolution percentage
-    const resolutionPercentage = total > 0 ? Math.round((resolved / total) * 100) : 0;
+    const resolutionPercentage = total > 0 ? Math.round((resolvedComplaints / total) * 100) : 0;
 
     res.json({
       success: true,
       metrics: {
         total,
-        pending: pending + underReview, // combine early stages for simple card
-        assigned,
-        inProgress,
-        resolved,
-        rejected,
+        totalComplaints: total,
+        totalCitizens,
+        totalOfficers,
+        totalDepartments,
+        pending: pendingComplaints + underReviewComplaints,
+        pendingComplaints,
+        underReviewComplaints,
+        assigned: assignedComplaints,
+        assignedComplaints,
+        inProgress: inProgressComplaints,
+        inProgressComplaints,
+        resolved: resolvedComplaints,
+        resolvedComplaints,
+        rejected: rejectedComplaints,
+        rejectedComplaints,
+        highPriorityComplaints,
+        mediumPriorityComplaints,
+        lowPriorityComplaints,
         resolutionPercentage,
-        categoryStats: categoryStats.map(stat => ({ name: stat._id, value: stat.count })),
+        resolvedVsUnresolved: {
+          resolved: resolvedComplaints,
+          unresolved: total - resolvedComplaints
+        },
+        statusDistribution,
+        priorityDistribution,
+        categoryStats: categoryStats.map(stat => ({ name: stat._id || 'Unspecified', value: stat.count })),
         monthlyStats: monthlyStats.map(stat => ({
           month: `${stat._id.month}/${stat._id.year}`,
           count: stat.count
         })),
         departmentStats: departmentStats.map(stat => ({
-          department: stat._id,
+          department: stat._id || 'Unassigned',
           total: stat.total,
           resolved: stat.resolved,
           rate: stat.total > 0 ? Math.round((stat.resolved / stat.total) * 100) : 0
-        }))
+        })),
+        officerWorkload
       }
     });
   } catch (error) {
@@ -111,10 +190,11 @@ exports.getAdminDashboardMetrics = async (req, res) => {
 // ==========================================
 exports.getUsers = async (req, res) => {
   try {
-    const { role, search } = req.query;
+    const { role, department, search } = req.query;
     let query = {};
 
     if (role) query.role = role;
+    if (department) query.department = department;
     if (search) {
       query.$or = [
         { fullName: { $regex: search, $options: 'i' } },

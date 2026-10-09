@@ -13,9 +13,14 @@ import {
   Trash2,
   Edit3,
   Eye,
-  ShieldAlert
+  ShieldAlert,
+  BarChart3,
+  CheckCircle
 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
+import StatusDonutChart from '../Components/Analytics/StatusDonutChart';
+import PriorityBarChart from '../Components/Analytics/PriorityBarChart';
+import AnalyticsCard from '../Components/Analytics/AnalyticsCard';
 
 const CitizenDashboard = () => {
   const { user } = useContext(AuthContext);
@@ -25,6 +30,23 @@ const CitizenDashboard = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
+
+  // Citizen-specific Analytics from MongoDB aggregation
+  const [analytics, setAnalytics] = useState({
+    total: 0,
+    pending: 0,
+    underReview: 0,
+    assigned: 0,
+    inProgress: 0,
+    resolved: 0,
+    rejected: 0,
+    highPriority: 0,
+    mediumPriority: 0,
+    lowPriority: 0,
+    resolutionRate: 0,
+    statusCounts: [],
+    priorityCounts: []
+  });
 
   // Fetch complaints
   const fetchComplaints = async () => {
@@ -36,25 +58,27 @@ const CitizenDashboard = () => {
       }
     } catch (err) {
       console.error('Error fetching complaints:', err);
-      toast.error('Failed to retrieve your complaints');
-    } finally {
+      if (toast?.error) toast.error('Failed to retrieve your complaints');
+    } flexInally: {
       setLoading(false);
+    }
+  };
+
+  const fetchAnalytics = async () => {
+    try {
+      const res = await axios.get('/api/analytics/citizen');
+      if (res.data.success) {
+        setAnalytics(res.data.analytics);
+      }
+    } catch (err) {
+      console.error('Error fetching citizen analytics:', err);
     }
   };
 
   useEffect(() => {
     fetchComplaints();
+    fetchAnalytics();
   }, []);
-
-  // Global Metrics across all citizen complaints (unfiltered)
-  const metrics = useMemo(() => {
-    return {
-      total: complaints.length,
-      pending: complaints.filter(c => ['Pending', 'Under Review'].includes(c.status)).length,
-      active: complaints.filter(c => ['Assigned', 'In Progress'].includes(c.status)).length,
-      resolved: complaints.filter(c => c.status === 'Resolved').length
-    };
-  }, [complaints]);
 
   // Client-side filtering for fast responsive UI
   const filteredComplaints = useMemo(() => {
@@ -72,16 +96,45 @@ const CitizenDashboard = () => {
     });
   }, [complaints, statusFilter, categoryFilter, search]);
 
+  const total = analytics.total || complaints.length;
+  const pendingCount = analytics.pending || complaints.filter(c => c.status === 'Pending').length;
+  const underReviewCount = analytics.underReview || complaints.filter(c => c.status === 'Under Review').length;
+  const assignedCount = analytics.assigned || complaints.filter(c => c.status === 'Assigned').length;
+  const inProgressCount = analytics.inProgress || complaints.filter(c => c.status === 'In Progress').length;
+  const resolvedCount = analytics.resolved || complaints.filter(c => c.status === 'Resolved').length;
+  const rejectedCount = analytics.rejected || complaints.filter(c => c.status === 'Rejected').length;
+  const resolutionRate = analytics.resolutionRate || (total > 0 ? Math.round((resolvedCount / total) * 100) : 0);
+
+  const statusChartData = analytics.statusCounts && analytics.statusCounts.length > 0
+    ? analytics.statusCounts
+    : [
+        { name: 'Resolved', count: resolvedCount, color: '#10b981' },
+        { name: 'In Progress', count: inProgressCount, color: '#3b82f6' },
+        { name: 'Assigned', count: assignedCount, color: '#6366f1' },
+        { name: 'Under Review', count: underReviewCount, color: '#a855f7' },
+        { name: 'Pending', count: pendingCount, color: '#f59e0b' },
+        { name: 'Rejected', count: rejectedCount, color: '#ef4444' }
+      ];
+
+  const priorityChartData = analytics.priorityCounts && analytics.priorityCounts.length > 0
+    ? analytics.priorityCounts
+    : [
+        { priority: 'High', count: complaints.filter(c => c.priority === 'High').length },
+        { priority: 'Medium', count: complaints.filter(c => c.priority === 'Medium').length },
+        { priority: 'Low', count: complaints.filter(c => c.priority === 'Low').length }
+      ];
+
   const handleDelete = async (id, complaintIdStr) => {
     if (window.confirm(`Are you sure you want to delete grievance ${complaintIdStr}?`)) {
       try {
         const res = await axios.delete(`/api/complaints/${id}`);
         if (res.data.success) {
-          toast.info(`Grievance ${complaintIdStr} deleted.`);
+          if (toast?.info) toast.info(`Grievance ${complaintIdStr} deleted.`);
           fetchComplaints();
+          fetchAnalytics();
         }
       } catch (err) {
-        toast.error(err.response?.data?.message || 'Failed to delete complaint');
+        if (toast?.error) toast.error(err.response?.data?.message || 'Failed to delete complaint');
       }
     }
   };
@@ -114,14 +167,6 @@ const CitizenDashboard = () => {
     }
   };
 
-  const statusPills = [
-    { label: 'All Grievances', value: '' },
-    { label: 'Pending Review', value: 'Pending' },
-    { label: 'Assigned', value: 'Assigned' },
-    { label: 'In Progress', value: 'In Progress' },
-    { label: 'Resolved', value: 'Resolved' }
-  ];
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Title Header */}
@@ -151,49 +196,82 @@ const CitizenDashboard = () => {
       </div>
 
       {/* Metrics Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Metric Total */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4">
-          <div className="p-3 bg-slate-100 text-slate-700 rounded-lg">
-            <ClipboardList className="h-6 w-6" />
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 mb-8">
+        <AnalyticsCard
+          title="Total Filed"
+          value={total}
+          subtitle="All grievances"
+          icon={ClipboardList}
+          color="slate"
+        />
+        <AnalyticsCard
+          title="Pending"
+          value={pendingCount}
+          subtitle="Awaiting triage"
+          icon={Clock}
+          color="amber"
+        />
+        <AnalyticsCard
+          title="Under Review"
+          value={underReviewCount}
+          subtitle="Department review"
+          icon={Clock}
+          color="purple"
+        />
+        <AnalyticsCard
+          title="Active Work"
+          value={assignedCount + inProgressCount}
+          subtitle={`${inProgressCount} in progress`}
+          icon={AlertTriangle}
+          color="blue"
+        />
+        <AnalyticsCard
+          title="Resolved"
+          value={resolvedCount}
+          subtitle={`${resolutionRate}% resolution`}
+          icon={CheckCircle2}
+          color="emerald"
+        />
+        <AnalyticsCard
+          title="Rejected"
+          value={rejectedCount}
+          subtitle="Disallowed/closed"
+          icon={ShieldAlert}
+          color="red"
+        />
+      </div>
+
+      {/* Role-Specific Analytics Section */}
+      <div className="mb-8 space-y-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+          <div className="flex items-center space-x-2">
+            <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
+              <BarChart3 className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">My Complaint Statistics</h2>
+              <p className="text-xs text-slate-500">Visual distribution of your submitted grievances and SLA progress.</p>
+            </div>
           </div>
-          <div>
-            <span className="text-2xl font-black text-slate-900 block">{metrics.total}</span>
-            <span className="text-xs text-slate-500 font-bold uppercase tracking-wider">Total Filed</span>
+          <div className="mt-2 sm:mt-0 flex items-center space-x-2 text-xs">
+            <span className="font-semibold text-slate-600">Personal Resolution Rate:</span>
+            <span className="px-2.5 py-0.5 rounded-full font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              {resolutionRate}% Resolved
+            </span>
           </div>
         </div>
 
-        {/* Metric Pending */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4">
-          <div className="p-3 bg-amber-50 text-amber-600 rounded-lg">
-            <Clock className="h-6 w-6" />
-          </div>
-          <div>
-            <span className="text-2xl font-black text-slate-900 block">{metrics.pending}</span>
-            <span className="text-xs text-amber-600 font-bold uppercase tracking-wider">Pending Review</span>
-          </div>
-        </div>
-
-        {/* Metric Active */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4">
-          <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
-            <AlertTriangle className="h-6 w-6" />
-          </div>
-          <div>
-            <span className="text-2xl font-black text-slate-900 block">{metrics.active}</span>
-            <span className="text-xs text-blue-600 font-bold uppercase tracking-wider">Active Tasks</span>
-          </div>
-        </div>
-
-        {/* Metric Resolved */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-4">
-          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg">
-            <CheckCircle2 className="h-6 w-6" />
-          </div>
-          <div>
-            <span className="text-2xl font-black text-slate-900 block">{metrics.resolved}</span>
-            <span className="text-xs text-emerald-600 font-bold uppercase tracking-wider">Resolved</span>
-          </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <StatusDonutChart
+            data={statusChartData}
+            title="My Complaint Status Distribution"
+            subtitle="Breakdown across all progress stages"
+          />
+          <PriorityBarChart
+            data={priorityChartData}
+            title="Priority Distribution"
+            subtitle="Assigned priority levels of your grievances"
+          />
         </div>
       </div>
 

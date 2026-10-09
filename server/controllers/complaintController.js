@@ -1,6 +1,9 @@
+const mongoose = require('mongoose');
 const Complaint = require('../models/Complaint');
 const ActivityLog = require('../models/ActivityLog');
-const Notification = require('../models/Notification');
+const ComplaintCategory = require('../models/ComplaintCategory');
+const { sendNotification } = require('../utils/notificationService');
+const { analyzeComplaint } = require('../utils/aiService');
 const fs = require('fs');
 const path = require('path');
 
@@ -10,15 +13,6 @@ const logActivity = async (action, performedBy, complaintId, details) => {
     await ActivityLog.create({ action, performedBy, complaintId, details });
   } catch (error) {
     console.error('Failed to log activity:', error);
-  }
-};
-
-// Helper to send notifications
-const sendNotification = async (userId, message) => {
-  try {
-    await Notification.create({ userId, message });
-  } catch (error) {
-    console.error('Failed to send notification:', error);
   }
 };
 
@@ -223,6 +217,129 @@ exports.deleteComplaint = async (req, res) => {
 
     res.json({ success: true, message: `Complaint ${complaintIdVal} deleted successfully` });
   } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Analyze complaint text and suggest category, department, priority using AI
+// @route   POST /api/complaints/ai-categorize
+// @access  Private (Citizen, Officer, Admin)
+exports.categorizeComplaint = async (req, res) => {
+  try {
+    const { title, description } = req.body;
+
+    if (!title || !title.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide at least a complaint title for AI analysis'
+      });
+    }
+
+    // Retrieve active categories from database to ensure AI suggestion matches valid DB categories
+    const categoriesDocs = await ComplaintCategory.find().select('name');
+    const availableCategories = categoriesDocs.map(c => c.name);
+
+    if (availableCategories.length === 0) {
+      availableCategories.push('Road/Pothole', 'Garbage Collection', 'Water Leakage', 'Streetlight Problem', 'Electricity Issue', 'Drainage Problem', 'Other');
+    }
+
+    const suggestion = await analyzeComplaint(title, description || '', availableCategories);
+
+    res.json({
+      success: true,
+      suggestion
+    });
+  } catch (error) {
+    console.error('AI Categorization Controller Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'AI categorization service encountered an error: ' + error.message
+    });
+  }
+};
+
+// @desc    Get analytics for logged-in citizen
+// @route   GET /api/complaints/my/analytics & GET /api/analytics/citizen
+// @access  Private (Citizen)
+exports.getMyAnalytics = async (req, res) => {
+  try {
+    const citizenObjectId = new mongoose.Types.ObjectId(req.user._id);
+
+    // Aggregate strictly for the logged-in citizen via MongoDB aggregation pipeline
+    const [aggregated] = await Complaint.aggregate([
+      { $match: { citizenId: citizenObjectId } },
+      {
+        $facet: {
+          total: [{ $count: 'count' }],
+          byStatus: [
+            { $group: { _id: '$status', count: { $sum: 1 } } }
+          ],
+          byPriority: [
+            { $group: { _id: '$priority', count: { $sum: 1 } } }
+          ]
+        }
+      }
+    ]);
+
+    const total = aggregated?.total[0]?.count || 0;
+    const statusMap = {};
+    (aggregated?.byStatus || []).forEach(item => {
+      statusMap[item._id] = item.count;
+    });
+
+    const priorityMap = {};
+    (aggregated?.byPriority || []).forEach(item => {
+      priorityMap[item._id] = item.count;
+    });
+
+    const pending = statusMap['Pending'] || 0;
+    const underReview = statusMap['Under Review'] || 0;
+    const assigned = statusMap['Assigned'] || 0;
+    const inProgress = statusMap['In Progress'] || 0;
+    const resolved = statusMap['Resolved'] || 0;
+    const rejected = statusMap['Rejected'] || 0;
+
+    const highPriority = priorityMap['High'] || 0;
+    const mediumPriority = priorityMap['Medium'] || 0;
+    const lowPriority = priorityMap['Low'] || 0;
+
+    const statusCounts = [
+      { name: 'Resolved', count: resolved, color: '#10b981' },
+      { name: 'In Progress', count: inProgress, color: '#3b82f6' },
+      { name: 'Assigned', count: assigned, color: '#6366f1' },
+      { name: 'Under Review', count: underReview, color: '#a855f7' },
+      { name: 'Pending', count: pending, color: '#f59e0b' },
+      { name: 'Rejected', count: rejected, color: '#ef4444' }
+    ];
+
+    const priorityCounts = [
+      { priority: 'High', count: highPriority, color: '#ef4444' },
+      { priority: 'Medium', count: mediumPriority, color: '#f59e0b' },
+      { priority: 'Low', count: lowPriority, color: '#64748b' }
+    ];
+
+    const resolutionRate = total > 0 ? Math.round((resolved / total) * 100) : 0;
+
+    res.json({
+      success: true,
+      analytics: {
+        total,
+        pending,
+        underReview,
+        assigned,
+        inProgress,
+        resolved,
+        rejected,
+        highPriority,
+        mediumPriority,
+        lowPriority,
+        resolutionRate,
+        statusCounts,
+        priorityCounts
+      }
+    });
+  } catch (error) {
+    console.error('Citizen Analytics Error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

@@ -1,6 +1,7 @@
+const mongoose = require('mongoose');
 const Complaint = require('../models/Complaint');
 const ActivityLog = require('../models/ActivityLog');
-const Notification = require('../models/Notification');
+const { sendNotification } = require('../utils/notificationService');
 const fs = require('fs');
 const path = require('path');
 
@@ -10,15 +11,6 @@ const logActivity = async (action, performedBy, complaintId, details) => {
     await ActivityLog.create({ action, performedBy, complaintId, details });
   } catch (error) {
     console.error('Failed to log activity:', error);
-  }
-};
-
-// Helper to send notifications
-const sendNotification = async (userId, message) => {
-  try {
-    await Notification.create({ userId, message });
-  } catch (error) {
-    console.error('Failed to send notification:', error);
   }
 };
 
@@ -156,13 +148,14 @@ exports.updateAssignedComplaint = async (req, res) => {
 };
 
 // @desc    Get dashboard metrics for Officer
-// @route   GET /api/officer/dashboard
+// @route   GET /api/officer/dashboard & GET /api/analytics/officer
 // @access  Private (Department Officer)
 exports.getOfficerDashboardMetrics = async (req, res) => {
   try {
-    const baseQuery = {
+    const officerObjectId = new mongoose.Types.ObjectId(req.user._id);
+    const baseMatch = {
       $or: [
-        { assignedOfficer: req.user._id },
+        { assignedOfficer: officerObjectId },
         {
           department: req.user.department || '',
           assignedOfficer: null
@@ -170,18 +163,99 @@ exports.getOfficerDashboardMetrics = async (req, res) => {
       ]
     };
 
-    const total = await Complaint.countDocuments(baseQuery);
-    const pending = await Complaint.countDocuments({ ...baseQuery, status: { $in: ['Pending', 'Under Review', 'Assigned'] } });
-    const active = await Complaint.countDocuments({ ...baseQuery, status: 'In Progress' });
-    const resolved = await Complaint.countDocuments({ ...baseQuery, status: 'Resolved' });
+    // Aggregate strictly for the logged-in officer via MongoDB aggregation pipeline
+    const [aggregated] = await Complaint.aggregate([
+      { $match: baseMatch },
+      {
+        $facet: {
+          total: [{ $count: 'count' }],
+          byStatus: [
+            { $group: { _id: '$status', count: { $sum: 1 } } }
+          ],
+          byPriority: [
+            { $group: { _id: '$priority', count: { $sum: 1 } } }
+          ],
+          resolvedTimes: [
+            { $match: { status: 'Resolved' } },
+            {
+              $project: {
+                durationMs: { $subtract: ['$updatedAt', '$createdAt'] }
+              }
+            },
+            {
+              $group: {
+                _id: null,
+                avgDurationMs: { $avg: '$durationMs' }
+              }
+            }
+          ]
+        }
+      }
+    ]);
+
+    const total = aggregated?.total[0]?.count || 0;
+    const statusMap = {};
+    (aggregated?.byStatus || []).forEach(item => {
+      statusMap[item._id] = item.count;
+    });
+
+    const priorityMap = {};
+    (aggregated?.byPriority || []).forEach(item => {
+      priorityMap[item._id] = item.count;
+    });
+
+    const pending = statusMap['Pending'] || 0;
+    const underReview = statusMap['Under Review'] || 0;
+    const assigned = statusMap['Assigned'] || 0;
+    const inProgress = statusMap['In Progress'] || 0;
+    const resolved = statusMap['Resolved'] || 0;
+    const rejected = statusMap['Rejected'] || 0;
+    const pendingTasks = pending + underReview + assigned;
+
+    const highPriority = priorityMap['High'] || 0;
+    const mediumPriority = priorityMap['Medium'] || 0;
+    const lowPriority = priorityMap['Low'] || 0;
+
+    const resolutionPercentage = total > 0 ? Math.round((resolved / total) * 100) : 0;
+
+    let avgResolutionDays = 0;
+    if (aggregated?.resolvedTimes?.length > 0 && aggregated.resolvedTimes[0].avgDurationMs) {
+      avgResolutionDays = +(aggregated.resolvedTimes[0].avgDurationMs / (1000 * 60 * 60 * 24)).toFixed(1);
+    }
+
+    const statusDistribution = [
+      { name: 'Resolved', count: resolved, color: '#10b981' },
+      { name: 'In Progress', count: inProgress, color: '#3b82f6' },
+      { name: 'Assigned', count: assigned, color: '#6366f1' },
+      { name: 'Under Review', count: underReview, color: '#a855f7' },
+      { name: 'Pending', count: pending, color: '#f59e0b' },
+      { name: 'Rejected', count: rejected, color: '#ef4444' }
+    ];
+
+    const priorityDistribution = [
+      { priority: 'High', count: highPriority, color: '#ef4444' },
+      { priority: 'Medium', count: mediumPriority, color: '#f59e0b' },
+      { priority: 'Low', count: lowPriority, color: '#64748b' }
+    ];
 
     res.json({
       success: true,
       metrics: {
         total,
-        pending,
-        active,
-        resolved
+        pending: pendingTasks,
+        active: inProgress,
+        inProgress,
+        resolved,
+        rejected,
+        underReview,
+        assigned,
+        highPriority,
+        mediumPriority,
+        lowPriority,
+        resolutionPercentage,
+        avgResolutionDays,
+        statusDistribution,
+        priorityDistribution
       }
     });
   } catch (error) {
