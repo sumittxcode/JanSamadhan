@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import axios from 'axios';
-import { ArrowLeft, Edit3, Image, Upload, AlertCircle, X } from 'lucide-react';
+import { ArrowLeft, Edit3, Upload, AlertCircle, MapPin } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 
 const EditComplaint = () => {
@@ -38,7 +38,7 @@ const EditComplaint = () => {
         setFetching(true);
         // Load categories
         const catRes = await axios.get('/api/categories');
-        if (catRes.data.success) {
+        if (catRes.data.success && Array.isArray(catRes.data.categories)) {
           setCategories(catRes.data.categories.map((c) => c.name));
         } else {
           setCategories(fallbackCategories);
@@ -49,7 +49,7 @@ const EditComplaint = () => {
         if (compRes.data.success) {
           const c = compRes.data.complaint;
           if (c.status !== 'Pending') {
-            setError('Only pending complaints can be edited before assignment.');
+            setError('Only pending complaints can be modified before departmental allocation.');
           }
           setFormData({
             title: c.title,
@@ -100,7 +100,7 @@ const EditComplaint = () => {
 
     const { title, description, category, location } = formData;
     if (!title.trim() || !description.trim() || !category || !location.trim()) {
-      setError('Please fill in all required fields.');
+      setError('Please fill in all mandatory fields.');
       return;
     }
 
@@ -138,219 +138,220 @@ const EditComplaint = () => {
 
   if (fetching) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-3">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-        <span className="text-slate-500 text-sm font-medium">Loading grievance data...</span>
+      <div className="min-h-[50vh] flex flex-col items-center justify-center space-y-3">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-900"></div>
+        <span className="text-slate-600 text-xs font-medium">Loading grievance data...</span>
       </div>
     );
   }
 
+  const isLocked = Boolean(error && error.includes('Only pending'));
+
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Back button */}
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Back Link */}
       <Link
         to="/dashboard"
-        className="inline-flex items-center space-x-1.5 text-slate-500 hover:text-slate-700 font-semibold text-sm mb-6 transition-colors"
+        className="inline-flex items-center space-x-1.5 text-xs font-semibold text-slate-600 hover:text-blue-900 transition-colors"
       >
         <ArrowLeft className="h-4 w-4" />
-        <span>Back to Dashboard</span>
+        <span>Return to Dashboard</span>
       </Link>
 
-      {/* Main Card */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         {/* Header */}
-        <div className="gov-header-bg p-6 text-white select-none">
-          <div className="flex items-center space-x-2 text-blue-200 text-xs font-semibold uppercase tracking-wider mb-1">
-            <Edit3 className="h-4 w-4" />
-            <span>Grievance Modification</span>
+        <div className="bg-slate-900 text-white p-6 border-b border-slate-800">
+          <div className="flex items-center space-x-2 text-[11px] font-bold text-blue-300 uppercase tracking-wider mb-1">
+            <Edit3 className="h-3.5 w-3.5" />
+            <span>Grievance Modification Desk</span>
           </div>
-          <h1 className="text-xl sm:text-2xl font-black tracking-tight">Edit Pending Grievance</h1>
-          <p className="text-blue-100 text-xs sm:text-sm mt-1">
-            You can modify the complaint details, description, and attached photo while status is still Pending.
+          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight">
+            Edit Pending Grievance
+          </h1>
+          <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+            You may adjust information while the status is Pending Review before it is assigned to an inspection officer.
           </p>
         </div>
 
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6">
           {error && (
-            <div className="bg-rose-50 border border-rose-200 p-4 rounded-xl flex items-start space-x-3">
-              <AlertCircle className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />
-              <p className="text-sm text-rose-800 font-medium">{error}</p>
+            <div className="bg-rose-50 border border-rose-200 p-4 rounded-lg flex items-start space-x-3 text-xs text-rose-800">
+              <AlertCircle className="h-4.5 w-4.5 text-rose-600 shrink-0 mt-0.5" />
+              <div>
+                <span className="font-bold block">Notice</span>
+                <span>{error}</span>
+              </div>
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Title */}
-            <div className="md:col-span-2">
+          <div className="space-y-4">
+            <div>
               <label htmlFor="title" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Grievance Title <span className="text-rose-500">*</span>
+                Grievance Title <span className="text-rose-600">*</span>
               </label>
               <input
                 id="title"
                 name="title"
                 type="text"
                 required
-                disabled={error.includes('Only pending')}
+                disabled={isLocked}
                 value={formData.title}
                 onChange={handleChange}
-                className="px-4 py-2.5 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 transition-all font-sans"
+                className="px-3.5 py-2.5 w-full bg-slate-50 border border-slate-300 rounded-lg text-xs focus:outline-none focus:bg-white focus:border-blue-900 transition-all font-sans disabled:opacity-60"
               />
             </div>
 
-            {/* Category Dropdown */}
-            <div>
-              <label htmlFor="category" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Category <span className="text-rose-500">*</span>
-              </label>
-              <select
-                id="category"
-                name="category"
-                required
-                disabled={error.includes('Only pending')}
-                value={formData.category}
-                onChange={handleChange}
-                className="px-4 py-2.5 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:bg-white focus:border-blue-500 transition-all font-sans"
-              >
-                <option value="">-- Select Category --</option>
-                {categories.map((cat, idx) => (
-                  <option key={idx} value={cat}>
-                    {cat}
-                  </option>
-                ))}
-              </select>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              <div>
+                <label htmlFor="category" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Category <span className="text-rose-600">*</span>
+                </label>
+                <select
+                  id="category"
+                  name="category"
+                  required
+                  disabled={isLocked}
+                  value={formData.category}
+                  onChange={handleChange}
+                  className="px-3.5 py-2.5 w-full bg-slate-50 border border-slate-300 rounded-lg text-xs focus:outline-none focus:bg-white focus:border-blue-900 transition-all font-sans disabled:opacity-60"
+                >
+                  <option value="">-- Select Category --</option>
+                  {categories.map((cat, idx) => (
+                    <option key={idx} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="priority" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  Urgency Rating
+                </label>
+                <select
+                  id="priority"
+                  name="priority"
+                  disabled={isLocked}
+                  value={formData.priority}
+                  onChange={handleChange}
+                  className="px-3.5 py-2.5 w-full bg-slate-50 border border-slate-300 rounded-lg text-xs focus:outline-none focus:bg-white focus:border-blue-900 transition-all font-sans disabled:opacity-60"
+                >
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                </select>
+              </div>
             </div>
 
-            {/* Estimated Priority */}
             <div>
-              <label htmlFor="priority" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Urgency Level
-              </label>
-              <select
-                id="priority"
-                name="priority"
-                disabled={error.includes('Only pending')}
-                value={formData.priority}
-                onChange={handleChange}
-                className="px-4 py-2.5 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:bg-white focus:border-blue-500 transition-all font-sans"
-              >
-                <option value="Low">Low</option>
-                <option value="Medium">Medium</option>
-                <option value="High">High</option>
-              </select>
-            </div>
-
-            {/* Location Address */}
-            <div className="md:col-span-2">
               <label htmlFor="location" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Precise Location / Landmark <span className="text-rose-500">*</span>
+                Location / Landmark Address <span className="text-rose-600">*</span>
               </label>
-              <input
-                id="location"
-                name="location"
-                type="text"
-                required
-                disabled={error.includes('Only pending')}
-                value={formData.location}
-                onChange={handleChange}
-                className="px-4 py-2.5 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:bg-white focus:border-blue-500 transition-all font-sans"
-              />
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                  <MapPin className="h-4 w-4" />
+                </div>
+                <input
+                  id="location"
+                  name="location"
+                  type="text"
+                  required
+                  disabled={isLocked}
+                  value={formData.location}
+                  onChange={handleChange}
+                  className="pl-9 pr-4 py-2.5 w-full bg-slate-50 border border-slate-300 rounded-lg text-xs focus:outline-none focus:bg-white focus:border-blue-900 transition-all font-sans disabled:opacity-60"
+                />
+              </div>
             </div>
 
-            {/* Detailed Description */}
-            <div className="md:col-span-2">
+            <div>
               <label htmlFor="description" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Detailed Description <span className="text-rose-500">*</span>
+                Detailed Description <span className="text-rose-600">*</span>
               </label>
               <textarea
                 id="description"
                 name="description"
                 required
                 rows="4"
-                disabled={error.includes('Only pending')}
+                disabled={isLocked}
                 value={formData.description}
                 onChange={handleChange}
-                className="px-4 py-2.5 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:bg-white focus:border-blue-500 transition-all font-sans"
+                className="px-3.5 py-2.5 w-full bg-slate-50 border border-slate-300 rounded-lg text-xs focus:outline-none focus:bg-white focus:border-blue-900 transition-all font-sans disabled:opacity-60"
               ></textarea>
             </div>
 
-            {/* Supporting Image Upload */}
-            <div className="md:col-span-2">
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Upload New Image (Optional, replaces existing)
+            {/* Photographic Evidence */}
+            <div className="space-y-3 pt-2 border-t border-slate-100">
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Attached Photographic Evidence
               </label>
-              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-300 border-dashed rounded-xl bg-slate-50/50 hover:bg-slate-50 hover:border-slate-400 transition-all">
-                <div className="space-y-1.5 text-center">
-                  <Upload className="mx-auto h-9 w-9 text-slate-400" />
-                  <div className="flex text-sm text-slate-600 justify-center">
-                    <label
-                      htmlFor="image-upload"
-                      className="relative cursor-pointer bg-white rounded-md font-semibold text-blue-600 hover:text-blue-500 px-1"
-                    >
-                      <span>Choose file</span>
-                      <input
-                        id="image-upload"
-                        name="image-upload"
-                        type="file"
-                        accept="image/*"
-                        disabled={error.includes('Only pending')}
-                        className="sr-only"
-                        onChange={handleImageChange}
-                      />
-                    </label>
-                    <p className="pl-1">or browse</p>
-                  </div>
-                  <p className="text-xs text-slate-400">PNG, JPG up to 5MB</p>
-                </div>
-              </div>
-            </div>
 
-            {/* Image Preview */}
-            {imagePreview && (
-              <div className="md:col-span-2">
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Supporting Photograph
-                </label>
-                <div className="relative inline-block border border-slate-200 rounded-lg overflow-hidden p-1 bg-white shadow-sm">
+              {!isLocked && (
+                <div className="flex justify-center px-6 pt-4 pb-5 border-2 border-slate-300 border-dashed rounded-xl bg-slate-50/50 hover:bg-slate-50 transition-colors">
+                  <div className="space-y-1 text-center">
+                    <Upload className="mx-auto h-7 w-7 text-slate-400" />
+                    <div className="flex text-xs text-slate-600 justify-center">
+                      <label
+                        htmlFor="image-upload"
+                        className="relative cursor-pointer bg-white rounded font-bold text-blue-900 hover:text-blue-950 px-1.5 py-0.5 border border-slate-200"
+                      >
+                        <span>Replace File</span>
+                        <input
+                          id="image-upload"
+                          name="image-upload"
+                          type="file"
+                          accept="image/*"
+                          disabled={isLocked}
+                          className="sr-only"
+                          onChange={handleImageChange}
+                        />
+                      </label>
+                      <span className="pl-1 text-slate-500 self-center">PNG, JPG up to 5MB</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {imagePreview && (
+                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between">
                   <img
                     src={imagePreview}
-                    alt="Preview"
-                    className="max-h-48 max-w-full rounded object-contain"
+                    alt="Current Photograph"
+                    className="h-16 w-16 object-cover rounded border border-slate-200"
                   />
-                  {!error.includes('Only pending') && (
+                  {!isLocked && (
                     <button
                       type="button"
                       onClick={() => {
                         setImage(null);
                         setImagePreview(null);
                       }}
-                      className="absolute top-2 right-2 bg-rose-600 hover:bg-rose-700 text-white rounded-full p-1 text-xs shadow transition-colors"
+                      className="px-2.5 py-1 text-xs text-rose-700 hover:bg-rose-50 rounded border border-rose-200 cursor-pointer font-medium"
                     >
-                      <X className="h-3.5 w-3.5" />
+                      Remove Photo
                     </button>
                   )}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="pt-4 border-t border-slate-100 flex justify-end space-x-3">
+          {/* Form Actions */}
+          <div className="pt-6 border-t border-slate-200 flex justify-end space-x-3">
             <Link
               to="/dashboard"
-              className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+              className="px-4 py-2 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
             >
               Cancel
             </Link>
+
             <button
               type="submit"
-              disabled={loading || error.includes('Only pending')}
-              className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold shadow transition-colors disabled:opacity-50 flex items-center space-x-2"
+              disabled={loading || isLocked}
+              className="px-5 py-2.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-bold shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
             >
-              {loading ? (
-                <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              ) : (
-                <span>Save Changes</span>
-              )}
+              {loading ? 'Saving Changes...' : 'Save Changes'}
             </button>
           </div>
         </form>

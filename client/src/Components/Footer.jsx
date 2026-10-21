@@ -1,81 +1,100 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Landmark, Phone, Mail, Shield, CheckCircle, Lock } from 'lucide-react';
+import { Shield, Lock, FileText, CheckCircle2, HelpCircle } from 'lucide-react';
 
 const Footer = () => {
   return (
-    <footer className="bg-slate-900 text-slate-400 text-sm border-t border-slate-800">
+    <footer className="bg-slate-900 text-slate-400 text-xs border-t border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Logo & Vision */}
-          <div>
-            <div className="flex items-center space-x-2 text-white mb-3">
-              <Shield className="h-6 w-6 text-emerald-500 transition-transform duration-200 hover:scale-110" />
-              <span className="text-lg font-bold tracking-tight">
-                JanSamadhan
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          
+          {/* Platform Identity */}
+          <div className="md:col-span-2 space-y-3">
+            <div className="flex items-center space-x-2.5 text-white">
+              <div className="h-8 w-8 bg-blue-800 rounded-lg flex items-center justify-center text-white">
+                <Shield className="h-5 w-5" />
+              </div>
+              <span className="text-base font-bold tracking-tight">JanSamadhan</span>
+            </div>
+            <p className="text-slate-400 leading-relaxed text-xs max-w-md">
+              A transparent, centralized citizen grievance management and redressal system.
+              Enabling citizens to report civic infrastructure and service problems directly to responsible
+              municipal officers with end-to-end SLA tracking and proof of resolution.
+            </p>
+            <div className="pt-1 flex items-center space-x-3 text-[11px] text-slate-400">
+              <span className="inline-flex items-center space-x-1">
+                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span>Active Grievance Redressal Service</span>
               </span>
             </div>
-            <p className="text-xs text-slate-400 leading-relaxed max-w-sm">
-              JanSamadhan is a Digital Citizen Grievance Redressal platform that bridges the gap between citizens and authorities. Report local civic issues transparently and track resolutions in real-time.
-            </p>
           </div>
 
-          {/* Quick Contact & Info */}
+          {/* Quick Access Navigation */}
           <div>
-            <h4 className="text-white font-semibold text-xs uppercase tracking-wider mb-3">Contact Support</h4>
-            <ul className="space-y-2 text-xs">
-              <li className="footer-hover-lift flex items-center space-x-2">
-                <Phone className="h-3.5 w-3.5 text-blue-400" />
-                <span>Toll-Free National Helpline: 1800-111-2233</span>
-              </li>
-              <li className="footer-hover-lift flex items-center space-x-2">
-                <Mail className="h-3.5 w-3.5 text-blue-400" />
-                <span>support-jansamadhan@gov.in</span>
-              </li>
-              <li className="footer-hover-lift flex items-center space-x-2">
-                <Landmark className="h-3.5 w-3.5 text-blue-400" />
-                <span>Department of Administrative Reforms &amp; Public Grievances</span>
-              </li>
-            </ul>
-          </div>
-
-          {/* Policy Disclosures */}
-          <div>
-            <h4 className="text-white font-semibold text-xs uppercase tracking-wider mb-3">Platform Policy</h4>
+            <h4 className="text-white font-bold text-xs uppercase tracking-wider mb-3">Portal Services</h4>
             <ul className="space-y-2 text-xs">
               <li>
-                <a href="#privacy" className="footer-hover-lift inline-flex items-center gap-1 hover:text-white transition-colors">Privacy Policy</a>
-              </li>
-              <li>
-                <a href="#terms" className="footer-hover-lift inline-flex items-center gap-1 hover:text-white transition-colors">Terms of Service</a>
-              </li>
-              <li>
-                <a href="#disclaimer" className="footer-hover-lift inline-flex items-center gap-1 hover:text-white transition-colors">Website Disclaimer &amp; Guidelines</a>
-              </li>
-              <li>
-                <Link to="/admin-login" className="footer-hover-lift inline-flex items-center gap-1 text-slate-400 hover:text-blue-400 transition-colors">
-                  <Lock className="h-3 w-3" />
-                  <span>Admin Portal</span>
+                <Link to="/" className="hover:text-white transition-colors">
+                  Home Portal
                 </Link>
               </li>
-              <li className="text-[11px] text-slate-500 mt-2">
-                Designed under the guidelines of national grievance tracking systems.
+              <li>
+                <Link to="/login?redirect=submit-complaint" className="hover:text-white transition-colors">
+                  File a Civic Grievance
+                </Link>
+              </li>
+              <li>
+                <Link to="/login?redirect=dashboard" className="hover:text-white transition-colors">
+                  Track Complaint Progress
+                </Link>
+              </li>
+              <li>
+                <Link to="/register" className="hover:text-white transition-colors">
+                  Citizen Account Registration
+                </Link>
+              </li>
+              <li>
+                <Link to="/login" className="hover:text-white transition-colors">
+                  Officer &amp; Citizen Sign In
+                </Link>
               </li>
             </ul>
           </div>
+
+          {/* Administrative Oversight & Guidelines */}
+          <div>
+            <h4 className="text-white font-bold text-xs uppercase tracking-wider mb-3">Administration &amp; SLA</h4>
+            <ul className="space-y-2 text-xs">
+              <li>
+                <Link to="/admin-login" className="inline-flex items-center space-x-1.5 text-slate-300 hover:text-white transition-colors font-medium">
+                  <Lock className="h-3.5 w-3.5 text-blue-400" />
+                  <span>Admin Control Room</span>
+                </Link>
+              </li>
+              <li className="pt-2 text-[11px] text-slate-400 leading-relaxed">
+                Standard Redressal Timelines:
+                <br />
+                • Emergency / Hazard: &lt; 24 Hours
+                <br />
+                • Standard Maintenance: 48 Hours
+                <br />
+                • Civic Infrastructure: &lt; 7 Days
+              </li>
+            </ul>
+          </div>
+
         </div>
 
-        {/* Divider and Copyright */}
-        <div className="border-t border-slate-800 mt-8 pt-6 flex flex-col sm:flex-row justify-between items-center text-xs">
-          <p>© {new Date().getFullYear()} JanSamadhan Portal. All Rights Reserved.</p>
-          <div className="flex items-center space-x-4 mt-2 sm:mt-0 text-slate-500">
-            <span>Powered by Digital India</span>
+        {/* Bottom Attribution */}
+        <div className="border-t border-slate-800 mt-8 pt-6 flex flex-col sm:flex-row justify-between items-center text-[11px] text-slate-400 gap-3">
+          <p>© {new Date().getFullYear()} JanSamadhan — Citizen Grievance Redressal System. All rights reserved.</p>
+          <div className="flex items-center space-x-4">
+            <span>SLA-Bound Redressal</span>
             <span>•</span>
-            <span>NIC Certified Secure</span>
+            <span>Citizen-First Transparency</span>
             <span>•</span>
-            <Link to="/admin-login" className="hover:text-blue-400 transition-colors flex items-center gap-1">
-              <Lock className="h-3 w-3" />
-              <span>Admin Portal</span>
+            <Link to="/admin-login" className="hover:text-slate-300 transition-colors">
+              Staff Portal
             </Link>
           </div>
         </div>

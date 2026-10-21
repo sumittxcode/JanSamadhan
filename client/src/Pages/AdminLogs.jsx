@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
-import { Shield, Clock, Landmark, Activity, User, Search, Filter, RefreshCw, FileText, CheckCircle2 } from 'lucide-react';
+import { Clock, Activity, User, Search, RefreshCw } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 
 const AdminLogs = () => {
@@ -19,7 +19,7 @@ const AdminLogs = () => {
       const res = await axios.get('/api/admin/activity-logs');
       if (res.data.success) {
         setLogs(res.data.logs);
-        if (isManual) toast.success('Activity logs updated.');
+        if (isManual && toast?.success) toast.success('Activity logs updated.');
       }
     } catch (err) {
       console.error('Failed to fetch activity logs:', err);
@@ -35,11 +35,11 @@ const AdminLogs = () => {
   }, []);
 
   const getActionBadge = (act) => {
-    if (act.includes('CREATED')) return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-    if (act.includes('DELETED') || act.includes('REJECTED')) return 'bg-rose-50 text-rose-700 border-rose-200';
-    if (act.includes('ASSIGNED')) return 'bg-blue-50 text-blue-700 border-blue-200';
-    if (act.includes('OFFICER') || act.includes('STATUS')) return 'bg-purple-50 text-purple-700 border-purple-200';
-    if (act.includes('ROLE')) return 'bg-amber-50 text-amber-700 border-amber-200';
+    if (act.includes('CREATED')) return 'bg-emerald-50 text-emerald-800 border-emerald-200';
+    if (act.includes('DELETED') || act.includes('REJECTED')) return 'bg-rose-50 text-rose-800 border-rose-200';
+    if (act.includes('ASSIGNED')) return 'bg-blue-50 text-blue-800 border-blue-200';
+    if (act.includes('OFFICER') || act.includes('STATUS')) return 'bg-purple-50 text-purple-800 border-purple-200';
+    if (act.includes('ROLE')) return 'bg-amber-50 text-amber-800 border-amber-200';
     return 'bg-slate-100 text-slate-700 border-slate-200';
   };
 
@@ -66,45 +66,41 @@ const AdminLogs = () => {
   }, [logs, actionFilter, search]);
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+    <div className="space-y-6">
       {/* Title Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 pb-2 border-b border-slate-200">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-200">
         <div>
-          <div className="flex items-center space-x-2">
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-800 uppercase tracking-wider">
-              System Audit
-            </span>
-            <span className="text-xs text-slate-400">| Compliance & Event Trail</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-1">
-            Grievance Redressal Audit Logs
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            System Audit Trail
           </h1>
-          <p className="text-sm text-slate-500">
-            Immutable system logs capturing complaint filing, assignments, status transitions, and administrative operations.
+          <p className="text-xs sm:text-sm text-slate-600 mt-1">
+            Immutable system logs capturing complaint filing, departmental assignments, status transitions, and administrative operations.
           </p>
         </div>
 
         <button
+          type="button"
           onClick={() => fetchLogs(true)}
           disabled={refreshing}
-          className="p-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-sm font-medium shadow-sm flex items-center space-x-1.5 transition-colors disabled:opacity-60"
-          title="Refresh logs"
+          className="p-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold shadow-xs flex items-center space-x-1.5 transition-colors disabled:opacity-60 cursor-pointer"
+          title="Refresh audit logs"
         >
-          <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin text-blue-600' : ''}`} />
-          <span className="text-xs font-semibold">Refresh</span>
+          <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin text-blue-900' : ''}`} />
+          <span>Refresh Logs</span>
         </button>
       </div>
 
-      {/* Action Filters */}
-      <div className="flex items-center space-x-2 overflow-x-auto pb-1 select-none">
+      {/* Action Filter Pills */}
+      <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 select-none">
         {actionTypes.map((tab) => (
           <button
             key={tab.value}
+            type="button"
             onClick={() => setActionFilter(tab.value)}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
               actionFilter === tab.value
-                ? 'bg-slate-900 text-white shadow-sm'
-                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:text-slate-900'
+                ? 'bg-blue-900 text-white shadow-xs'
+                : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
             }`}
           >
             {tab.label}
@@ -113,7 +109,7 @@ const AdminLogs = () => {
       </div>
 
       {/* Search Bar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="relative flex-1 max-w-md">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
             <Search className="h-4 w-4" />
@@ -123,31 +119,31 @@ const AdminLogs = () => {
             placeholder="Search audit trail by keyword, ID, or user..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 pr-4 py-2 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 transition-all font-sans"
+            className="pl-9 pr-4 py-2 w-full bg-slate-50 border border-slate-300 rounded-lg text-xs placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-900 transition-all font-sans"
           />
         </div>
 
         <div className="text-xs text-slate-500 font-medium">
-          Showing {filteredLogs.length} of {logs.length} audit entries
+          Showing {filteredLogs.length} of {logs.length} logged events
         </div>
       </div>
 
       {/* Logs Catalog */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 bg-white border border-slate-200 rounded-xl">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-3"></div>
-          <span className="text-slate-600 text-sm font-medium">Compiling audit database...</span>
+        <div className="flex flex-col items-center justify-center py-20 bg-white border border-slate-200 rounded-xl shadow-xs">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-900 mb-3"></div>
+          <span className="text-slate-600 text-xs font-medium">Compiling audit database...</span>
         </div>
       ) : filteredLogs.length === 0 ? (
-        <div className="text-center py-16 bg-white border border-slate-200 rounded-xl space-y-3">
+        <div className="text-center py-16 bg-white border border-slate-200 rounded-xl shadow-xs space-y-3">
           <Activity className="h-12 w-12 text-slate-300 mx-auto" />
-          <h3 className="text-base font-bold text-slate-800">No Logs Recorded</h3>
-          <p className="text-slate-500 text-xs max-w-xs mx-auto">
-            Administrative actions, grievance dispatches, and resolutions will appear here automatically.
+          <h3 className="text-base font-bold text-slate-900">No Logs Recorded</h3>
+          <p className="text-slate-500 text-xs max-w-xs mx-auto leading-relaxed">
+            Administrative actions, grievance dispatches, and status updates will be logged here automatically.
           </p>
         </div>
       ) : (
-        <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden p-6 space-y-4">
+        <div className="bg-white border border-slate-200 rounded-xl shadow-xs overflow-hidden p-5 sm:p-6">
           <div className="flow-root">
             <ul className="-mb-8">
               {filteredLogs.map((log, idx) => (
@@ -167,14 +163,14 @@ const AdminLogs = () => {
                       </div>
                       
                       {/* Details Box */}
-                      <div className="flex-1 min-w-0 pt-1.5 flex justify-between space-x-4">
-                        <div className="text-xs text-slate-600">
-                          <p className="font-semibold text-slate-900 select-text leading-snug">{log.details}</p>
-                          <div className="flex items-center space-x-2.5 mt-2">
+                      <div className="flex-1 min-w-0 pt-1 flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2">
+                        <div className="text-xs text-slate-700">
+                          <p className="font-semibold text-slate-900 leading-snug">{log.details}</p>
+                          <div className="flex flex-wrap items-center gap-2 mt-1.5">
                             <span className={`px-2 py-0.5 rounded text-[10px] font-bold border ${getActionBadge(log.action)}`}>
                               {log.action}
                             </span>
-                            <span className="flex items-center space-x-1 text-[11px] text-slate-500 font-medium select-all">
+                            <span className="flex items-center space-x-1 text-[11px] text-slate-500">
                               <User className="h-3 w-3 text-slate-400" />
                               <span>By {log.performedBy?.fullName || 'System'} ({log.performedBy?.role || 'Service'})</span>
                             </span>
@@ -182,13 +178,11 @@ const AdminLogs = () => {
                         </div>
 
                         {/* Timestamp */}
-                        <div className="text-right text-[11px] whitespace-nowrap text-slate-400 font-medium pt-0.5">
-                          <time className="flex items-center space-x-1">
-                            <Clock className="h-3 w-3 text-slate-400" />
-                            <span>
-                              {new Date(log.createdAt).toLocaleDateString()} {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                          </time>
+                        <div className="text-[11px] text-slate-400 font-medium whitespace-nowrap flex items-center space-x-1">
+                          <Clock className="h-3 w-3 text-slate-400" />
+                          <span>
+                            {new Date(log.createdAt).toLocaleDateString()} {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
                         </div>
                       </div>
                     </div>

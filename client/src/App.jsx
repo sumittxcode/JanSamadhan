@@ -22,6 +22,8 @@ import AdminCategories from './pages/AdminCategories';
 import AdminLogs from './pages/AdminLogs';
 import AdminLogin from './pages/AdminLogin';
 
+import AppLayout from './Components/AppLayout';
+
 function App() {
   return (
     <AuthProvider>
@@ -31,105 +33,108 @@ function App() {
             <Navbar />
             
             <main className="flex-grow">
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/" element={<Home />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/admin-login" element={<AdminLogin />} />
-              <Route path="/register" element={<Register />} />
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/" element={<Home />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/admin-login" element={<AdminLogin />} />
+                <Route path="/register" element={<Register />} />
 
-              {/* Citizen Routes */}
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute allowedRoles={['Citizen']}>
-                    <CitizenDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/submit-complaint"
-                element={
-                  <ProtectedRoute allowedRoles={['Citizen']}>
-                    <SubmitComplaint />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/edit-complaint/:id"
-                element={
-                  <ProtectedRoute allowedRoles={['Citizen']}>
-                    <EditComplaint />
-                  </ProtectedRoute>
-                }
-              />
+                {/* Authenticated Workspace with Role Sidebar & Breadcrumb Trail */}
+                <Route element={<AppLayout />}>
+                  {/* Citizen Routes */}
+                  <Route
+                    path="/dashboard"
+                    element={
+                      <ProtectedRoute allowedRoles={['Citizen']}>
+                        <CitizenDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/submit-complaint"
+                    element={
+                      <ProtectedRoute allowedRoles={['Citizen']}>
+                        <SubmitComplaint />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/edit-complaint/:id"
+                    element={
+                      <ProtectedRoute allowedRoles={['Citizen']}>
+                        <EditComplaint />
+                      </ProtectedRoute>
+                    }
+                  />
 
-              {/* Shared Protected Routes */}
-              <Route
-                path="/complaint/:id"
-                element={
-                  <ProtectedRoute allowedRoles={['Citizen', 'Department Officer', 'Administrator']}>
-                    <ComplaintDetails />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/profile"
-                element={
-                  <ProtectedRoute allowedRoles={['Citizen', 'Department Officer', 'Administrator']}>
-                    <Profile />
-                  </ProtectedRoute>
-                }
-              />
+                  {/* Shared Protected Routes */}
+                  <Route
+                    path="/complaint/:id"
+                    element={
+                      <ProtectedRoute allowedRoles={['Citizen', 'Department Officer', 'Administrator']}>
+                        <ComplaintDetails />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/profile"
+                    element={
+                      <ProtectedRoute allowedRoles={['Citizen', 'Department Officer', 'Administrator']}>
+                        <Profile />
+                      </ProtectedRoute>
+                    }
+                  />
 
-              {/* Department Officer Routes */}
-              <Route
-                path="/officer"
-                element={
-                  <ProtectedRoute allowedRoles={['Department Officer']}>
-                    <OfficerDashboard />
-                  </ProtectedRoute>
-                }
-              />
+                  {/* Department Officer Routes */}
+                  <Route
+                    path="/officer"
+                    element={
+                      <ProtectedRoute allowedRoles={['Department Officer']}>
+                        <OfficerDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
 
-              {/* Admin Routes */}
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute allowedRoles={['Administrator']}>
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/users"
-                element={
-                  <ProtectedRoute allowedRoles={['Administrator']}>
-                    <AdminUsers />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/categories"
-                element={
-                  <ProtectedRoute allowedRoles={['Administrator']}>
-                    <AdminCategories />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/admin/logs"
-                element={
-                  <ProtectedRoute allowedRoles={['Administrator']}>
-                    <AdminLogs />
-                  </ProtectedRoute>
-                }
-              />
+                  {/* Admin Routes */}
+                  <Route
+                    path="/admin"
+                    element={
+                      <ProtectedRoute allowedRoles={['Administrator']}>
+                        <AdminDashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/users"
+                    element={
+                      <ProtectedRoute allowedRoles={['Administrator']}>
+                        <AdminUsers />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/categories"
+                    element={
+                      <ProtectedRoute allowedRoles={['Administrator']}>
+                        <AdminCategories />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin/logs"
+                    element={
+                      <ProtectedRoute allowedRoles={['Administrator']}>
+                        <AdminLogs />
+                      </ProtectedRoute>
+                    }
+                  />
+                </Route>
 
-              {/* Catch-all redirect */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </main>
+                {/* Catch-all redirect */}
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </main>
 
           <Footer />
         </div>

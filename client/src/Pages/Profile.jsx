@@ -1,6 +1,6 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { User, Mail, Phone, MapPin, Lock, CheckCircle2, AlertCircle } from 'lucide-react';
+import { User, Mail, Phone, MapPin, Lock, CheckCircle2, AlertCircle, Shield } from 'lucide-react';
 
 const Profile = () => {
   const { user, updateProfile } = useContext(AuthContext);
@@ -38,14 +38,14 @@ const Profile = () => {
     setSuccess(false);
 
     const { fullName, phone, address, password, confirmPassword } = formData;
-    if (!fullName || !phone || !address) {
-      setError('Name, phone, and address are required.');
+    if (!fullName.trim() || !phone.trim() || !address.trim()) {
+      setError('Name, phone number, and address are mandatory.');
       return;
     }
 
     if (password) {
       if (password.length < 6) {
-        setError('New password must be at least 6 characters.');
+        setError('New password must contain at least 6 characters.');
         return;
       }
       if (password !== confirmPassword) {
@@ -55,7 +55,7 @@ const Profile = () => {
     }
 
     setLoading(true);
-    const updatedData = { fullName, phone, address };
+    const updatedData = { fullName: fullName.trim(), phone: phone.trim(), address: address.trim() };
     if (password) updatedData.password = password;
 
     const result = await updateProfile(updatedData);
@@ -64,63 +64,78 @@ const Profile = () => {
     if (result.success) {
       setSuccess(true);
       setFormData(prev => ({ ...prev, password: '', confirmPassword: '' }));
-      setTimeout(() => setSuccess(false), 5000); // Clear alert after 5s
+      setTimeout(() => setSuccess(false), 5000);
     } else {
-      setError(result.message);
+      setError(result.message || 'Failed to update profile.');
     }
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="bg-white rounded-xl border border-slate-200/60 shadow-md overflow-hidden">
+    <div className="max-w-3xl mx-auto space-y-6">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
         {/* Banner Header */}
-        <div className="bg-slate-900 text-white px-6 py-5 select-none">
-          <h2 className="text-lg font-bold">Profile Management</h2>
-          <p className="text-xs text-slate-400">View and update your official portal credentials.</p>
+        <div className="bg-slate-900 text-white p-6 border-b border-slate-800">
+          <div className="flex items-center space-x-2 text-[11px] font-bold text-blue-300 uppercase tracking-wider mb-1">
+            <User className="h-3.5 w-3.5" />
+            <span>Identity &amp; Credentials</span>
+          </div>
+          <h1 className="text-xl sm:text-2xl font-extrabold tracking-tight">
+            Account Profile
+          </h1>
+          <p className="text-xs text-slate-400 mt-1">
+            Review and update your portal contact details and security credentials.
+          </p>
         </div>
 
         {/* Error Alert */}
         {error && (
-          <div className="mx-6 mt-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg flex items-start space-x-2.5">
-            <AlertCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
-            <p className="text-sm text-red-750 font-medium">{error}</p>
+          <div className="mx-6 mt-6 bg-rose-50 border border-rose-200 p-3.5 rounded-lg flex items-start space-x-2.5 text-xs text-rose-800">
+            <AlertCircle className="h-4.5 w-4.5 text-rose-600 shrink-0 mt-0.5" />
+            <p className="font-medium">{error}</p>
           </div>
         )}
 
         {/* Success Alert */}
         {success && (
-          <div className="mx-6 mt-6 bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-r-lg flex items-start space-x-2.5">
-            <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-            <p className="text-sm text-emerald-800 font-medium">Profile updated successfully!</p>
+          <div className="mx-6 mt-6 bg-emerald-50 border border-emerald-200 p-3.5 rounded-lg flex items-start space-x-2.5 text-xs text-emerald-800">
+            <CheckCircle2 className="h-4.5 w-4.5 text-emerald-600 shrink-0 mt-0.5" />
+            <p className="font-medium">Profile credentials updated successfully!</p>
           </div>
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             
-            {/* Account Role Badge info */}
-            <div className="md:col-span-2 bg-slate-50 p-4 rounded-xl border border-slate-200/50 flex justify-between items-center text-sm">
+            {/* Identity Badge */}
+            <div className="md:col-span-2 bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
               <div>
-                <span className="font-semibold text-slate-700 block">Registered Email</span>
-                <span className="text-slate-500 text-xs flex items-center space-x-1.5 mt-1 select-all">
-                  <Mail className="h-3.5 w-3.5" />
+                <span className="font-bold text-slate-800 block">Registered Email</span>
+                <span className="text-slate-600 font-mono text-[11px] flex items-center space-x-1.5 mt-0.5 select-all">
+                  <Mail className="h-3.5 w-3.5 text-slate-400" />
                   <span>{user?.email}</span>
                 </span>
               </div>
-              <span className="px-3 py-1 bg-blue-50 text-blue-800 border border-blue-200 rounded-full text-xs font-semibold uppercase tracking-wider">
-                {user?.role} Role
-              </span>
+              <div className="flex items-center space-x-2">
+                <span className="px-2.5 py-1 bg-blue-50 text-blue-900 border border-blue-200 rounded-full text-xs font-bold uppercase tracking-wider">
+                  {user?.role} Role
+                </span>
+                {user?.department && (
+                  <span className="px-2.5 py-1 bg-slate-200 text-slate-800 rounded-full text-xs font-semibold">
+                    {user.department}
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Full Name */}
             <div>
-              <label htmlFor="fullName" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Full Name
+              <label htmlFor="fullName" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Full Name <span className="text-rose-600">*</span>
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <User className="h-4.5 w-4.5" />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                  <User className="h-4 w-4" />
                 </div>
                 <input
                   id="fullName"
@@ -129,19 +144,19 @@ const Profile = () => {
                   required
                   value={formData.fullName}
                   onChange={handleChange}
-                  className="pl-11 pr-4 py-2.5 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                  className="pl-9 pr-4 py-2 w-full bg-slate-50 border border-slate-300 rounded-lg text-xs placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-900 transition-all font-sans"
                 />
               </div>
             </div>
 
             {/* Phone Number */}
             <div>
-              <label htmlFor="phone" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Phone Number
+              <label htmlFor="phone" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Phone Number <span className="text-rose-600">*</span>
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                  <Phone className="h-4.5 w-4.5" />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                  <Phone className="h-4 w-4" />
                 </div>
                 <input
                   id="phone"
@@ -150,19 +165,19 @@ const Profile = () => {
                   required
                   value={formData.phone}
                   onChange={handleChange}
-                  className="pl-11 pr-4 py-2.5 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                  className="pl-9 pr-4 py-2 w-full bg-slate-50 border border-slate-300 rounded-lg text-xs placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-900 transition-all font-sans"
                 />
               </div>
             </div>
 
             {/* Address */}
             <div className="md:col-span-2">
-              <label htmlFor="address" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                Address
+              <label htmlFor="address" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Address <span className="text-rose-600">*</span>
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 pt-3 pointer-events-none text-slate-400">
-                  <MapPin className="h-4.5 w-4.5" />
+                <div className="absolute inset-y-0 left-0 pl-3 pt-2.5 pointer-events-none text-slate-400">
+                  <MapPin className="h-4 w-4" />
                 </div>
                 <textarea
                   id="address"
@@ -171,23 +186,22 @@ const Profile = () => {
                   rows="2"
                   value={formData.address}
                   onChange={handleChange}
-                  className="pl-11 pr-4 py-2 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                  className="pl-9 pr-4 py-2 w-full bg-slate-50 border border-slate-300 rounded-lg text-xs placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-900 transition-all font-sans"
                 ></textarea>
               </div>
             </div>
 
-            {/* Password Section info header */}
+            {/* Password Section */}
             <div className="md:col-span-2 border-t border-slate-100 pt-4">
-              <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-1 flex items-center space-x-1">
-                <Lock className="h-3.5 w-3.5" />
+              <h2 className="text-xs font-bold text-slate-800 uppercase tracking-wider mb-1 flex items-center space-x-1.5">
+                <Lock className="h-3.5 w-3.5 text-slate-500" />
                 <span>Change Password (Optional)</span>
-              </h4>
-              <p className="text-[11px] text-slate-400">Leave fields empty to retain current password.</p>
+              </h2>
+              <p className="text-[11px] text-slate-400">Leave these fields blank if you do not wish to change your password.</p>
             </div>
 
-            {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              <label htmlFor="password" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                 New Password
               </label>
               <input
@@ -196,14 +210,13 @@ const Profile = () => {
                 type="password"
                 value={formData.password}
                 onChange={handleChange}
-                className="px-4 py-2.5 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                className="px-3.5 py-2 w-full bg-slate-50 border border-slate-300 rounded-lg text-xs placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-900 transition-all font-sans"
                 placeholder="••••••••"
               />
             </div>
 
-            {/* Confirm Password */}
             <div>
-              <label htmlFor="confirmPassword" className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+              <label htmlFor="confirmPassword" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
                 Confirm New Password
               </label>
               <input
@@ -212,7 +225,7 @@ const Profile = () => {
                 type="password"
                 value={formData.confirmPassword}
                 onChange={handleChange}
-                className="px-4 py-2.5 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+                className="px-3.5 py-2 w-full bg-slate-50 border border-slate-300 rounded-lg text-xs placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-900 transition-all font-sans"
                 placeholder="••••••••"
               />
             </div>
@@ -224,13 +237,9 @@ const Profile = () => {
             <button
               type="submit"
               disabled={loading}
-              className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold shadow-md transition-colors disabled:opacity-50 font-sans"
+              className="px-5 py-2.5 bg-blue-900 hover:bg-blue-800 text-white rounded-lg text-xs font-bold shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
             >
-              {loading ? (
-                <div className="h-5 w-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              ) : (
-                'Save Changes'
-              )}
+              {loading ? 'Saving Changes...' : 'Save Profile Changes'}
             </button>
           </div>
         </form>
