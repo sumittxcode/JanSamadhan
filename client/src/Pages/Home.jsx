@@ -16,6 +16,14 @@ import {
 const Home = () => {
   const { user } = useContext(AuthContext);
 
+  // Dynamic destination for dashboard button based on user role
+  const getDashboardDestination = () => {
+    if (!user) return '/login?redirect=dashboard';
+    if (user.role === 'Administrator') return '/admin';
+    if (user.role === 'Department Officer') return '/officer';
+    return '/dashboard';
+  };
+
   // Stats data
   const stats = [
     { label: 'Active Complaints', value: '1,248', icon: Activity, color: 'text-amber-600 bg-amber-50' },
@@ -49,74 +57,80 @@ const Home = () => {
       <section className="bg-white border-b border-slate-100 py-16 lg:py-24">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+            
             {/* Hero Left Content */}
             <div className="lg:col-span-7 space-y-6">
-              <div className="inline-flex items-center space-x-1.5 bg-blue-50 text-blue-800 px-3 py-1 rounded-full text-xs font-semibold select-none">
+              <div className="inline-flex items-center space-x-1.5 bg-blue-50 text-blue-800 px-3.5 py-1 rounded-full text-xs font-semibold select-none border border-blue-100">
                 <Globe className="h-3.5 w-3.5" />
                 <span>Centralized Grievance Redressal Portal</span>
               </div>
+
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight">
                 JanSamadhan
               </h1>
-              <p className="text-xl text-slate-600 leading-relaxed font-normal max-w-2xl">
-                Report civic issues, track complaints, and connect with authorities easily. "Your Voice. Your Complaint. Your Solution."
-              </p>
+
+              <div className="space-y-2 max-w-2xl">
+                <p className="text-lg sm:text-xl text-slate-600 leading-relaxed font-normal">
+                  Report civic issues, track complaints, and connect with authorities easily.
+                </p>
+                <p className="text-base sm:text-lg font-semibold text-slate-800">
+                  "Your Voice. Your Complaint. Your Solution."
+                </p>
+              </div>
 
               {/* Action Buttons */}
-              <div className="flex flex-wrap gap-4 pt-2">
+              <div className="pt-2">
                 {user ? (
-                  <>
+                  <div className="flex flex-wrap gap-4">
                     <Link
-                      to={user.role === 'Citizen' ? '/submit-complaint' : user.role === 'Department Officer' ? '/officer' : '/admin'}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-sm font-semibold shadow-md hover:shadow-lg transition-all flex items-center space-x-2"
+                      to={getDashboardDestination()}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-sm font-semibold shadow-md hover:shadow-lg transition-all inline-flex items-center space-x-2"
                     >
                       <span>Go to Dashboard</span>
                       <ArrowRight className="h-4 w-4" />
                     </Link>
-                  </>
+                  </div>
                 ) : (
-                  <>
+                  <div className="flex flex-wrap gap-3.5 items-center">
+                    <Link
+                      to={getDashboardDestination()}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-sm font-semibold shadow-md hover:shadow-lg transition-all inline-flex items-center space-x-2"
+                    >
+                      <span>Go to Dashboard</span>
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
                     <Link
                       to="/login?redirect=submit-complaint"
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-lg text-sm font-semibold shadow-md hover:shadow-lg transition-all"
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-3 rounded-lg text-sm font-semibold shadow-md hover:shadow-lg transition-all inline-flex items-center"
                     >
-                      Register Complaint
+                      <span>Register Complaint</span>
                     </Link>
                     <Link
                       to="/login?redirect=dashboard"
-                      className="bg-white border border-slate-300 hover:border-slate-400 text-slate-700 px-6 py-3 rounded-lg text-sm font-semibold transition-all"
+                      className="bg-white border border-slate-300 hover:border-slate-400 text-slate-700 px-5 py-3 rounded-lg text-sm font-semibold transition-all inline-flex items-center"
                     >
-                      Track Complaint
+                      <span>Track Complaint</span>
                     </Link>
-                    <Link
-                      to="/login"
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg text-sm font-semibold shadow-md hover:shadow-lg transition-all"
-                    >
-                      Login
-                    </Link>
-                    <Link
-                      to="/register"
-                      className="bg-slate-800 hover:bg-slate-900 text-white px-6 py-3 rounded-lg text-sm font-semibold shadow-md hover:shadow-lg transition-all"
-                    >
-                      Signup
-                    </Link>
-                  </>
+                  </div>
                 )}
               </div>
             </div>
 
-            {/* Hero Right Visual */}
+            {/* Hero Right Visual: Woman in front of City Hall with Municipal Portal App */}
             <div className="lg:col-span-5 relative">
               <div className="absolute -inset-1 bg-gradient-to-r from-blue-100 to-emerald-100 rounded-2xl blur-xl opacity-70"></div>
-              <div className="relative bg-white p-2 rounded-2xl border border-slate-100 shadow-xl overflow-hidden aspect-video lg:aspect-square flex items-center justify-center">
+              <div className="relative bg-white p-2 rounded-2xl border border-slate-100 shadow-xl overflow-hidden aspect-[4/3] sm:aspect-square lg:aspect-square flex items-center justify-center">
                 <img
                   src="/assets/images/citizen_grievance_hero.png"
-                  alt="Citizen using app to report issue"
+                  alt="Professional woman in front of City Hall using the JanSamadhan civic services portal on her phone"
                   className="rounded-xl w-full h-full object-cover"
+                  loading="eager"
                   onError={(e) => {
                     // Fallback to stylized SVG card if image fails to load
-                    e.target.style.display = 'none';
-                    e.target.nextSibling.style.display = 'flex';
+                    e.currentTarget.style.display = 'none';
+                    if (e.currentTarget.nextElementSibling) {
+                      e.currentTarget.nextElementSibling.style.display = 'flex';
+                    }
                   }}
                 />
                 <div className="hidden flex-col items-center justify-center space-y-4 p-8 text-center bg-gradient-to-br from-blue-50 to-emerald-50 h-full w-full">
@@ -126,6 +140,7 @@ const Home = () => {
                 </div>
               </div>
             </div>
+
           </div>
         </div>
       </section>
@@ -151,7 +166,7 @@ const Home = () => {
       </section>
 
       {/* How It Works Section */}
-      <section className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-slate-200/50">
+      <section id="how-it-works" className="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-slate-200/50">
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-16">
           <h2 className="text-3xl font-bold text-slate-900 tracking-tight">How the Platform Works</h2>
           <p className="text-slate-600">We facilitate an open channel of communication between municipal offices and local citizens.</p>
