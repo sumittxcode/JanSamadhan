@@ -262,7 +262,7 @@ const Navbar = () => {
                 </Link>
                 <Link
                   to="/register"
-                  className="text-xs font-semibold bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2 rounded-lg shadow-xs hover:shadow-sm transition-all"
+                  className="text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg shadow-xs hover:shadow-sm transition-all"
                 >
                   Register Account
                 </Link>
@@ -358,7 +358,7 @@ const Navbar = () => {
                 <Link
                   to="/register"
                   onClick={() => setShowMobileMenu(false)}
-                  className="block text-center px-4 py-2 rounded-lg bg-emerald-700 text-white hover:bg-emerald-800"
+                  className="block text-center px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 font-semibold"
                 >
                   Register Account
                 </Link>
