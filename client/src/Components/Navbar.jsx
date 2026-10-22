@@ -7,7 +7,6 @@ import {
   Menu, 
   X, 
   Shield, 
-  Lock,
   ChevronDown
 } from 'lucide-react';
 
@@ -50,16 +49,7 @@ const Navbar = () => {
         <div className="hidden sm:flex items-center space-x-4 text-slate-300 text-[11px]">
           <span>Citizen Redressal Service</span>
           <span>•</span>
-          <span>SLA Monitored</span>
-          {!user && (
-            <>
-              <span>•</span>
-              <Link to="/admin-login" className="text-slate-300 hover:text-white flex items-center space-x-1">
-                <Lock className="h-3 w-3" />
-                <span>Admin Login</span>
-              </Link>
-            </>
-          )}
+          <span>Authenticated Access</span>
         </div>
       </div>
 
@@ -355,14 +345,7 @@ const Navbar = () => {
               >
                 Track Status
               </Link>
-              <Link
-                to="/admin-login"
-                onClick={() => setShowMobileMenu(false)}
-                className="block px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 flex items-center space-x-1"
-              >
-                <Lock className="h-3.5 w-3.5" />
-                <span>Admin Login</span>
-              </Link>
+
 
               <div className="pt-2 border-t border-slate-100 space-y-2">
                 <Link

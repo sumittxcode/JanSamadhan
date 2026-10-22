@@ -111,8 +111,8 @@ const AdminUsers = () => {
     <div className="space-y-6">
       {/* Title Header */}
       <div className="pb-4 border-b border-slate-200">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-          User &amp; Officer Management
+        <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+          User Management
         </h1>
         <p className="text-xs sm:text-sm text-slate-600 mt-1">
           Maintain platform accounts, allocate departmental officers to civic wings, and configure role privileges.

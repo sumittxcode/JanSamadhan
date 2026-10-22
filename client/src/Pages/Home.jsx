@@ -100,15 +100,15 @@ const Home = () => {
             <div className="lg:col-span-7 space-y-6">
               <div className="inline-flex items-center space-x-2 bg-slate-100 text-slate-800 px-3 py-1 rounded-full text-xs font-semibold select-none border border-slate-200">
                 <span className="w-2 h-2 rounded-full bg-emerald-600"></span>
-                <span>Centralized Citizen Redressal Platform</span>
+                <span>Civic Grievance Management System</span>
               </div>
 
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
-                Your Voice. Your Community. Our Commitment.
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-snug">
+                File, Track, and Resolve Civic Grievances Online
               </h1>
 
-              <p className="text-base sm:text-lg text-slate-600 leading-relaxed max-w-2xl">
-                JanSamadhan helps citizens report civic issues, track complaint progress, and stay informed about the resolution process through a centralized grievance management platform.
+              <p className="text-sm sm:text-base text-slate-600 leading-relaxed max-w-2xl">
+                JanSamadhan is a centralized grievance management system. Citizens can report civic infrastructure issues, track resolution progress in real time, and receive notifications when their complaint is assigned and resolved.
               </p>
 
               {/* Action Buttons */}

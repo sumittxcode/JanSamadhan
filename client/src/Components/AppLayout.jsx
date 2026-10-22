@@ -82,7 +82,7 @@ const AppLayout = ({ children }) => {
 
             {/* Breadcrumb Trail */}
             <nav className="flex items-center space-x-1.5 text-xs text-slate-500 font-medium overflow-x-auto py-0.5">
-              <span className="text-slate-400 font-bold uppercase tracking-wider text-[10px]">Portal</span>
+              <Link to="/" className="text-slate-400 hover:text-slate-600 font-bold uppercase tracking-wider text-[10px] transition-colors">Home</Link>
               {breadcrumbs.map((crumb, idx) => (
                 <React.Fragment key={crumb.path + idx}>
                   <ChevronRight className="h-3 w-3 text-slate-300 shrink-0" />

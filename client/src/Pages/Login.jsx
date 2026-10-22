@@ -55,10 +55,10 @@ const Login = () => {
             <Shield className="h-6 w-6" />
           </div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-            Portal Sign In
+            Sign In
           </h1>
           <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">
-            JanSamadhan Citizen &amp; Officer Access
+            Citizen &amp; Officer Access
           </p>
         </div>
 
@@ -151,11 +151,6 @@ const Login = () => {
             </Link>
           </p>
 
-          <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 text-left text-[11px] text-slate-600 space-y-1">
-            <span className="font-bold text-slate-800 block uppercase tracking-wider text-[10px]">Portal Credentials Guide:</span>
-            <p><span className="font-semibold text-slate-700">Department Officer:</span> officer@jansamadhan.gov.in / OfficerPass123!</p>
-            <p><span className="font-semibold text-slate-700">Citizen:</span> Register a new account to test filing grievances</p>
-          </div>
         </div>
       </div>
     </div>

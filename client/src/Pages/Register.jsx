@@ -75,10 +75,10 @@ const Register = () => {
             <Shield className="h-6 w-6" />
           </div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-            Create Account
+            Register Account
           </h1>
           <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">
-            JanSamadhan Citizen Portal
+            Citizen &amp; Officer Registration
           </p>
         </div>
 

@@ -211,13 +211,6 @@ const RoleSidebar = ({
 
         {/* Footer Actions / Collapse Toggle */}
         <div className="p-3 border-t border-slate-200 bg-slate-50/50 space-y-1">
-          {/* Quick SLA / Help Guide info */}
-          {!isCollapsed && (
-            <div className="px-3 py-2 mb-2 rounded-lg bg-blue-50/60 border border-blue-100/60 text-[11px] text-blue-950">
-              <span className="font-bold block">Grievance Portal SLA</span>
-              <span className="text-[10px] text-slate-600">Standard resolution turnaround: 48h–7d</span>
-            </div>
-          )}
 
           {/* Desktop Collapse Toggle */}
           <button

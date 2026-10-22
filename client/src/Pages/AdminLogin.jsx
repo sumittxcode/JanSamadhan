@@ -65,16 +65,16 @@ const AdminLogin = () => {
             <KeyRound className="h-6 w-6" />
           </div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-            Admin Control Access
+            Administrative Sign In
           </h1>
           <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">
-            JanSamadhan Administrative Portal
+            Restricted — Authorised Personnel Only
           </p>
         </div>
 
         {/* Security Notice */}
         <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-[11px] text-slate-600 leading-relaxed">
-          <span className="font-bold text-slate-800 block mb-0.5">Administrative Access Only</span>
+          <span className="font-bold text-slate-800 block mb-0.5">Restricted Access</span>
           This console is reserved exclusively for system administrators. All access requests and modifications are logged to the immutable audit database.
         </div>
 
