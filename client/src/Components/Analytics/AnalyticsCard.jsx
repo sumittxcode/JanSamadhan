@@ -51,26 +51,26 @@ const AnalyticsCard = ({
   const scheme = colorStyles[color] || colorStyles.slate;
 
   return (
-    <div className={`bg-white p-4 sm:p-5 rounded-xl border border-slate-200 shadow-xs hover:border-slate-300 transition-colors flex flex-col justify-between ${className}`}>
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
+    <div className={`bg-white p-4 sm:p-4.5 rounded-xl border border-slate-200/90 shadow-xs hover:border-slate-300 transition-colors flex flex-col justify-between h-full min-h-[108px] min-w-0 ${className}`}>
+      <div className="flex items-start justify-between gap-2.5">
+        <div className="min-w-0 flex-1">
           <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block truncate">
             {title}
           </span>
-          <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight block mt-1">
+          <span className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight block mt-1 truncate">
             {value}
           </span>
         </div>
         {Icon && (
-          <div className={`p-2.5 rounded-lg ${scheme.bg} ${scheme.text} shrink-0`}>
-            <Icon className="h-5 w-5" aria-hidden="true" />
+          <div className={`p-2 rounded-lg ${scheme.bg} ${scheme.text} shrink-0`}>
+            <Icon className="h-4.5 w-4.5" aria-hidden="true" />
           </div>
         )}
       </div>
 
       {(subtitle || trend) && (
-        <div className="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 gap-2">
-          {subtitle && <span className="truncate text-[11px]">{subtitle}</span>}
+        <div className="mt-2.5 pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 gap-2">
+          {subtitle && <span className="truncate text-[11px] text-slate-500">{subtitle}</span>}
           {trend && (
             <span className={`px-2 py-0.5 rounded text-[10px] font-bold shrink-0 ${scheme.badge}`}>
               {trend}

@@ -139,12 +139,12 @@ const RoleSidebar = ({
         className={`fixed top-16 bottom-0 left-0 z-40 flex flex-col bg-white border-r border-slate-200 transition-all duration-200 ease-in-out
           lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] lg:self-start lg:z-20
           ${mobileOpen ? 'translate-x-0 w-64' : '-translate-x-full lg:translate-x-0'}
-          ${isCollapsed ? 'lg:w-18' : 'lg:w-64'}
+          ${isCollapsed ? 'lg:w-20' : 'lg:w-64'}
         `}
       >
         {/* User Identity Banner in Sidebar */}
         <div className="p-4 border-b border-slate-100 bg-slate-50/70">
-          <div className="flex items-center space-x-3">
+          <div className={`flex items-center ${isCollapsed ? 'lg:justify-center' : 'space-x-3'}`}>
             <div className="h-10 w-10 rounded-lg bg-blue-900 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-xs">
               {user.fullName ? user.fullName.charAt(0).toUpperCase() : 'U'}
             </div>

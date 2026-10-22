@@ -24,6 +24,7 @@ import StatusDonutChart from '../Components/Analytics/StatusDonutChart';
 import PriorityBarChart from '../Components/Analytics/PriorityBarChart';
 import AnalyticsCard from '../Components/Analytics/AnalyticsCard';
 import { StatusBadge, PriorityBadge } from '../Components/StatusBadge';
+import { useTimeGreeting, getUserDisplayName } from '../utils/greeting';
 
 const CitizenDashboard = () => {
   const { user } = useContext(AuthContext);
@@ -150,7 +151,8 @@ const CitizenDashboard = () => {
     }
   };
 
-  const displayName = user?.fullName || 'Citizen';
+  const greeting = useTimeGreeting();
+  const displayName = getUserDisplayName(user, 'Citizen');
 
   return (
     <div className="space-y-6">
@@ -161,7 +163,7 @@ const CitizenDashboard = () => {
             My Complaints
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 mt-1">
-            Welcome back, <span className="font-semibold text-slate-900">{displayName}</span>.
+            {greeting}, <span className="font-semibold text-slate-900">{displayName}</span>. Here is the latest overview of your civic complaints.
           </p>
         </div>
 
@@ -188,7 +190,7 @@ const CitizenDashboard = () => {
       </div>
 
       {/* Summary Metrics Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
         <AnalyticsCard
           title="Total Filed"
           value={total}

@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { AuthContext } from '../context/AuthContext';
+import { useTimeGreeting, getUserDisplayName } from '../utils/greeting';
 import {
   ClipboardList,
   Clock,
@@ -29,7 +31,10 @@ import OfficerWorkloadChart from '../Components/Analytics/OfficerWorkloadChart';
 import { StatusBadge, PriorityBadge } from '../Components/StatusBadge';
 
 const AdminDashboard = () => {
+  const { user } = useContext(AuthContext);
   const toast = useToast();
+  const greeting = useTimeGreeting();
+  const displayName = getUserDisplayName(user, 'Administrator');
   const [metrics, setMetrics] = useState({
     total: 0,
     totalComplaints: 0,
@@ -247,7 +252,7 @@ const AdminDashboard = () => {
             Admin Dashboard
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 mt-1">
-            System-wide operational oversight, grievance routing, officer allocations, and SLA monitoring.
+            {greeting}, <span className="font-semibold text-slate-900">{displayName}</span>. System-wide operational oversight, grievance routing, officer allocations, and SLA monitoring.
           </p>
         </div>
 
@@ -275,7 +280,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Summary Metrics Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
         <AnalyticsCard
           title="Citizens"
           value={metrics.totalCitizens || 0}

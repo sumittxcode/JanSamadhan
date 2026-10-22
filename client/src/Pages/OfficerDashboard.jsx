@@ -28,6 +28,7 @@ import AnalyticsCard from '../Components/Analytics/AnalyticsCard';
 import StatusDonutChart from '../Components/Analytics/StatusDonutChart';
 import PriorityBarChart from '../Components/Analytics/PriorityBarChart';
 import { StatusBadge, PriorityBadge } from '../Components/StatusBadge';
+import { useTimeGreeting, getUserDisplayName } from '../utils/greeting';
 
 const OfficerDashboard = () => {
   const { user } = useContext(AuthContext);
@@ -171,6 +172,9 @@ const OfficerDashboard = () => {
     }
   };
 
+  const greeting = useTimeGreeting();
+  const displayName = getUserDisplayName(user, 'Officer');
+
   return (
     <div className="space-y-6">
       {/* Title Header */}
@@ -180,9 +184,7 @@ const OfficerDashboard = () => {
             Resolution Desk
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 mt-1">
-            Department:{' '}
-            <span className="font-bold text-slate-900">{user?.department || 'Municipal Services'}</span>
-            {' • '}Inspect reported civic issues, perform field remediation, and upload resolution proof.
+            {greeting}, <span className="font-semibold text-slate-900">{displayName}</span>. Department: <span className="font-bold text-slate-900">{user?.department || 'Municipal Services'}</span> • Review assigned grievances, perform field inspection, and record resolution updates.
           </p>
         </div>
 
@@ -199,7 +201,7 @@ const OfficerDashboard = () => {
       </div>
 
       {/* Summary Metrics Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
         <AnalyticsCard
           title="Total Tickets"
           value={metrics.total}

@@ -9,7 +9,6 @@ import {
   CheckCircle2,
   ArrowRight,
   Building2,
-  ChevronRight,
   Eye,
   ShieldCheck
 } from 'lucide-react';
@@ -17,7 +16,6 @@ import {
 const Home = () => {
   const { user } = useContext(AuthContext);
   const [categories, setCategories] = useState([]);
-  const [loadingCategories, setLoadingCategories] = useState(true);
 
   const fallbackCategories = [
     { name: 'Road/Pothole', description: 'Damaged roads, potholes, pavement erosion, and highway safety hazards.' },
@@ -40,8 +38,6 @@ const Home = () => {
       } catch (err) {
         console.warn('Using fallback complaint categories:', err);
         setCategories(fallbackCategories);
-      } finally {
-        setLoadingCategories(false);
       }
     };
     fetchCategories();
@@ -103,16 +99,16 @@ const Home = () => {
                 <span>Civic Grievance Management System</span>
               </div>
 
-              <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight leading-snug">
-                File, Track, and Resolve Civic Grievances Online
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight leading-snug">
+                Your Community. Your Voice. Better Civic Services.
               </h1>
 
               <p className="text-sm sm:text-base text-slate-600 leading-relaxed max-w-2xl">
-                JanSamadhan is a centralized grievance management system. Citizens can report civic infrastructure issues, track resolution progress in real time, and receive notifications when their complaint is assigned and resolved.
+                JanSamadhan connects citizens directly with municipal authorities. Report civic and infrastructure issues in your neighborhood, track resolution milestones in real time, and receive verified updates from department officers.
               </p>
 
               {/* Action Buttons */}
-              <div className="flex flex-wrap gap-3.5 pt-2">
+              <div className="flex flex-wrap gap-3.5 pt-1">
                 <Link
                   to={getDestination('submit')}
                   className="bg-emerald-700 hover:bg-emerald-800 text-white px-5 py-3 rounded-lg text-sm font-semibold shadow-xs hover:shadow-sm transition-all flex items-center space-x-2"
@@ -140,70 +136,47 @@ const Home = () => {
                 )}
               </div>
 
-              {/* SLA Notice */}
-              <div className="pt-2 flex items-center space-x-4 text-xs text-slate-500">
+              {/* Trust Indicators */}
+              <div className="pt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-500">
                 <span className="flex items-center space-x-1.5">
                   <Clock className="h-3.5 w-3.5 text-blue-600" />
-                  <span>Standard SLA Tracking</span>
+                  <span>Transparent Redressal Milestones</span>
                 </span>
                 <span>•</span>
                 <span className="flex items-center space-x-1.5">
                   <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-                  <span>Officer Verification Proof</span>
+                  <span>Field Verification with Photographic Proof</span>
                 </span>
               </div>
             </div>
 
-            {/* Hero Right Visual / Overview Card */}
-            <div className="lg:col-span-5">
-              <div className="bg-slate-900 text-white rounded-2xl p-6 sm:p-7 shadow-lg border border-slate-800 space-y-5">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-                  <div className="flex items-center space-x-2.5">
-                    <div className="h-8 w-8 bg-blue-800 rounded-lg flex items-center justify-center text-white">
-                      <Shield className="h-4.5 w-4.5" />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-sm">JanSamadhan Portal</h3>
-                      <p className="text-[11px] text-slate-400">Citizen Service Redressal</p>
-                    </div>
+            {/* Hero Right Visual: Authentic Citizen Photograph */}
+            <div className="lg:col-span-5 relative">
+              <div className="relative rounded-2xl overflow-hidden border border-slate-200 shadow-md bg-slate-100">
+                <img
+                  src="/assets/images/citizen_reporting_hero.jpg"
+                  alt="An Indian citizen reporting a local civic issue using JanSamadhan in her neighborhood"
+                  className="w-full h-auto aspect-[4/3] object-cover"
+                  loading="eager"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = "/assets/images/citizen_grievance_hero.png";
+                  }}
+                />
+                
+                {/* Restrained overlay caption card */}
+                <div className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4 bg-white/95 backdrop-blur-xs border border-slate-200/90 rounded-xl p-3 shadow-sm flex items-center space-x-3">
+                  <div className="h-8 w-8 rounded-lg bg-blue-50 text-blue-900 flex items-center justify-center shrink-0 border border-blue-100">
+                    <Shield className="h-4.5 w-4.5" />
                   </div>
-                  <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-900 text-emerald-300 border border-emerald-700">
-                    Active System
-                  </span>
-                </div>
-
-                {/* System Capabilities List */}
-                <div className="space-y-3 text-xs">
-                  <div className="p-3 bg-slate-800/80 rounded-xl border border-slate-700/60 space-y-1">
-                    <span className="font-bold text-blue-300 block">Civic Issue Categorization</span>
-                    <p className="text-slate-300 text-[11px] leading-relaxed">
-                      Assisted grievance classification to accurately direct your issue to roads, electricity, sanitation, or water departments.
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-slate-900 leading-tight">
+                      Empowering Civic Action
+                    </p>
+                    <p className="text-[11px] text-slate-500 truncate">
+                      Report infrastructure issues directly to your municipal ward
                     </p>
                   </div>
-
-                  <div className="p-3 bg-slate-800/80 rounded-xl border border-slate-700/60 space-y-1">
-                    <span className="font-bold text-emerald-300 block">Officer Accountability</span>
-                    <p className="text-slate-300 text-[11px] leading-relaxed">
-                      Designated department officers investigate reported landmarks and submit photographic evidence of resolution.
-                    </p>
-                  </div>
-
-                  <div className="p-3 bg-slate-800/80 rounded-xl border border-slate-700/60 space-y-1">
-                    <span className="font-bold text-purple-300 block">Direct Citizen Tracking</span>
-                    <p className="text-slate-300 text-[11px] leading-relaxed">
-                      Instant unique Tracking Reference ID for every grievance with real-time audit milestones and notifications.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="pt-2 text-center">
-                  <Link
-                    to={getDestination('submit')}
-                    className="text-xs text-blue-300 hover:text-white font-semibold inline-flex items-center space-x-1"
-                  >
-                    <span>Lodge a grievance now</span>
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  </Link>
                 </div>
               </div>
             </div>
