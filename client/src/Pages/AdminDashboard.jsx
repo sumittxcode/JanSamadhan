@@ -249,10 +249,13 @@ const AdminDashboard = () => {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-200">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-            Admin Dashboard
+            {greeting}, {displayName}!
           </h1>
-          <p className="text-xs sm:text-sm text-slate-600 mt-1">
-            {greeting}, <span className="font-semibold text-slate-900">{displayName}</span>. System-wide operational oversight, grievance routing, officer allocations, and SLA monitoring.
+          <h2 className="text-sm sm:text-base font-semibold text-slate-700 mt-1">
+            Admin Dashboard
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            System-wide operational oversight, grievance routing, officer allocations, and SLA monitoring.
           </p>
         </div>
 
