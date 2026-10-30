@@ -1,43 +1,57 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
-import Navbar from './components/Navbar';
-import Footer from './components/Footer';
-import ProtectedRoute from './components/ProtectedRoute';
+import Navbar from './Components/Navbar';
+import Footer from './Components/Footer';
+import ProtectedRoute from './Components/ProtectedRoute';
+import AppLayout from './Components/AppLayout';
 
 // Pages
-import Home from './pages/Home';
-import Login from './pages/Login';
-import Register from './pages/Register';
-import CitizenDashboard from './pages/CitizenDashboard';
-import SubmitComplaint from './pages/SubmitComplaint';
-import EditComplaint from './pages/EditComplaint';
-import ComplaintDetails from './pages/ComplaintDetails';
-import Profile from './pages/Profile';
-import OfficerDashboard from './pages/OfficerDashboard';
-import AdminDashboard from './pages/AdminDashboard';
-import AdminUsers from './pages/AdminUsers';
-import AdminCategories from './pages/AdminCategories';
-import AdminLogs from './pages/AdminLogs';
-import AdminLogin from './pages/AdminLogin';
+import Home from './Pages/Home';
+import Login from './Pages/Login';
+import Register from './Pages/Register';
+import CitizenDashboard from './Pages/CitizenDashboard';
+import SubmitComplaint from './Pages/SubmitComplaint';
+import EditComplaint from './Pages/EditComplaint';
+import ComplaintDetails from './Pages/ComplaintDetails';
+import Profile from './Pages/Profile';
+import OfficerDashboard from './Pages/OfficerDashboard';
+import AdminDashboard from './Pages/AdminDashboard';
+import AdminUsers from './Pages/AdminUsers';
+import AdminCategories from './Pages/AdminCategories';
+import AdminLogs from './Pages/AdminLogs';
+import AdminLogin from './Pages/AdminLogin';
+
+// Public layout: renders the public marketing navbar and footer for public routes
+const PublicLayout = () => {
+  return (
+    <div className="flex flex-col min-h-screen bg-slate-50 font-sans">
+      <Navbar />
+      <main className="flex-grow">
+        <Outlet />
+      </main>
+      <Footer />
+    </div>
+  );
+};
 
 function App() {
   return (
     <AuthProvider>
       <ToastProvider>
         <Router>
-          <div className="flex flex-col min-h-screen bg-slate-50 font-sans">
-            <Navbar />
-            
-            <main className="flex-grow">
-            <Routes>
-              {/* Public Routes */}
+          <Routes>
+            {/* Public Routes with Public Navbar & Footer */}
+            <Route element={<PublicLayout />}>
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/admin-login" element={<AdminLogin />} />
               <Route path="/register" element={<Register />} />
+            </Route>
 
+            {/* Authenticated Workspace with Authenticated Application Shell */}
+            <Route element={<AppLayout />}>
               {/* Citizen Routes */}
               <Route
                 path="/dashboard"
@@ -125,15 +139,12 @@ function App() {
                   </ProtectedRoute>
                 }
               />
+            </Route>
 
-              {/* Catch-all redirect */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </main>
-
-          <Footer />
-        </div>
-      </Router>
+            {/* Catch-all redirect */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Router>
       </ToastProvider>
     </AuthProvider>
   );

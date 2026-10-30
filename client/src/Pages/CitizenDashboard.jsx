@@ -15,18 +15,23 @@ import {
   Eye,
   ShieldAlert,
   BarChart3,
-  CheckCircle
+  MapPin,
+  Calendar,
+  RefreshCw
 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import StatusDonutChart from '../Components/Analytics/StatusDonutChart';
 import PriorityBarChart from '../Components/Analytics/PriorityBarChart';
 import AnalyticsCard from '../Components/Analytics/AnalyticsCard';
+import { StatusBadge, PriorityBadge } from '../Components/StatusBadge';
+import { useTimeGreeting, getUserDisplayName } from '../utils/greeting';
 
 const CitizenDashboard = () => {
   const { user } = useContext(AuthContext);
   const toast = useToast();
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
@@ -49,9 +54,10 @@ const CitizenDashboard = () => {
   });
 
   // Fetch complaints
-  const fetchComplaints = async () => {
+  const fetchComplaints = async (isManual = false) => {
     try {
-      setLoading(true);
+      if (isManual) setRefreshing(true);
+      else setLoading(true);
       const res = await axios.get('/api/complaints/my');
       if (res.data.success) {
         setComplaints(res.data.complaints);
@@ -59,8 +65,9 @@ const CitizenDashboard = () => {
     } catch (err) {
       console.error('Error fetching complaints:', err);
       if (toast?.error) toast.error('Failed to retrieve your complaints');
-    } flexInally: {
+    } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -80,18 +87,23 @@ const CitizenDashboard = () => {
     fetchAnalytics();
   }, []);
 
+  const handleRefresh = () => {
+    fetchComplaints(true);
+    fetchAnalytics();
+  };
+
   // Client-side filtering for fast responsive UI
   const filteredComplaints = useMemo(() => {
     return complaints.filter((c) => {
       const matchesStatus = !statusFilter || c.status === statusFilter;
       const matchesCategory = !categoryFilter || c.category === categoryFilter;
-      const q = search.toLowerCase();
+      const q = search.toLowerCase().trim();
       const matchesSearch =
-        !search ||
-        c.title.toLowerCase().includes(q) ||
-        c.description.toLowerCase().includes(q) ||
-        c.location.toLowerCase().includes(q) ||
-        c.complaintId.toLowerCase().includes(q);
+        !q ||
+        (c.title && c.title.toLowerCase().includes(q)) ||
+        (c.description && c.description.toLowerCase().includes(q)) ||
+        (c.location && c.location.toLowerCase().includes(q)) ||
+        (c.complaintId && c.complaintId.toLowerCase().includes(q));
       return matchesStatus && matchesCategory && matchesSearch;
     });
   }, [complaints, statusFilter, categoryFilter, search]);
@@ -139,64 +151,49 @@ const CitizenDashboard = () => {
     }
   };
 
-  const getPriorityColor = (prio) => {
-    switch (prio) {
-      case 'High':
-        return 'bg-rose-50 text-rose-700 border-rose-200';
-      case 'Medium':
-        return 'bg-amber-50 text-amber-700 border-amber-200';
-      default:
-        return 'bg-slate-100 text-slate-700 border-slate-200';
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Resolved':
-        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-      case 'Rejected':
-        return 'bg-rose-50 text-rose-700 border-rose-200';
-      case 'In Progress':
-        return 'bg-blue-50 text-blue-700 border-blue-200';
-      case 'Assigned':
-        return 'bg-indigo-50 text-indigo-700 border-indigo-200';
-      case 'Under Review':
-        return 'bg-purple-50 text-purple-700 border-purple-200';
-      default:
-        return 'bg-amber-50 text-amber-700 border-amber-200';
-    }
-  };
+  const greeting = useTimeGreeting();
+  const displayName = getUserDisplayName(user, 'Citizen');
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      {/* Title Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 pb-2 border-b border-slate-200">
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-200">
         <div>
-          <div className="flex items-center space-x-2">
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 uppercase tracking-wider">
-              Citizen Portal
-            </span>
-            <span className="text-xs text-slate-400">| Grievance Tracking Desk</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-1">
-            Citizen Grievance Dashboard
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+            {greeting}, {displayName}!
           </h1>
-          <p className="text-sm text-slate-500">
-            Welcome back, <span className="font-semibold text-slate-800">{user?.fullName}</span>. Track the status and SLA resolution progress of your filed issues.
+          <h2 className="text-sm sm:text-base font-semibold text-slate-700 mt-1">
+            My Complaints
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Here is the latest overview of your civic complaints.
           </p>
         </div>
 
-        <Link
-          to="/submit-complaint"
-          className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-lg text-sm font-semibold shadow-sm flex items-center space-x-1.5 transition-colors"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Register New Grievance</span>
-        </Link>
+        <div className="flex items-center space-x-2.5">
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="p-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold shadow-xs flex items-center space-x-1.5 transition-colors disabled:opacity-60 cursor-pointer"
+            title="Refresh complaints"
+            aria-label="Refresh complaints"
+          >
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin text-blue-900' : ''}`} />
+          </button>
+
+          <Link
+            to="/submit-complaint"
+            className="bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2.5 rounded-lg text-xs font-semibold shadow-xs flex items-center space-x-1.5 transition-colors cursor-pointer"
+          >
+            <Plus className="h-4 w-4" />
+            <span>File a Complaint</span>
+          </Link>
+        </div>
       </div>
 
-      {/* Metrics Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5 mb-8">
+      {/* Summary Metrics Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
         <AnalyticsCard
           title="Total Filed"
           value={total}
@@ -241,27 +238,27 @@ const CitizenDashboard = () => {
         />
       </div>
 
-      {/* Role-Specific Analytics Section */}
-      <div className="mb-8 space-y-4">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+      {/* Visual Analytics Section */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
           <div className="flex items-center space-x-2">
-            <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
-              <BarChart3 className="h-5 w-5" />
+            <div className="p-1.5 bg-blue-50 text-blue-900 rounded-lg">
+              <BarChart3 className="h-4.5 w-4.5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900">My Complaint Statistics</h2>
-              <p className="text-xs text-slate-500">Visual distribution of your submitted grievances and SLA progress.</p>
+              <h2 className="text-sm font-bold text-slate-900">Complaint Analytics</h2>
+              <p className="text-[11px] text-slate-500">Distribution across lifecycle stages and urgency levels.</p>
             </div>
           </div>
-          <div className="mt-2 sm:mt-0 flex items-center space-x-2 text-xs">
-            <span className="font-semibold text-slate-600">Personal Resolution Rate:</span>
-            <span className="px-2.5 py-0.5 rounded-full font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <div className="flex items-center space-x-2 text-xs">
+            <span className="font-medium text-slate-600">Personal Resolution Rate:</span>
+            <span className="px-2.5 py-0.5 rounded-full font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
               {resolutionRate}% Resolved
             </span>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <StatusDonutChart
             data={statusChartData}
             title="My Complaint Status Distribution"
@@ -276,36 +273,35 @@ const CitizenDashboard = () => {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
-        {/* Search */}
+      <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+        {/* Search Input */}
         <div className="relative flex-1 max-w-md">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
             <Search className="h-4 w-4" />
           </div>
           <input
             type="text"
-            placeholder="Search by ID, subject, or location..."
+            placeholder="Search by ID, title, or location..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 pr-4 py-2 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 transition-all font-sans"
+            className="pl-9 pr-4 py-2 w-full bg-slate-50 border border-slate-300 rounded-lg text-xs placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-900 transition-all font-sans"
           />
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           <div className="flex items-center space-x-1.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">
             <Filter className="h-3.5 w-3.5" />
             <span>Filters:</span>
           </div>
 
-          {/* Status Filter */}
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium px-3 py-2 focus:outline-none focus:bg-white focus:border-blue-500 transition-all"
+            className="bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium px-3 py-2 focus:outline-none focus:bg-white focus:border-blue-900 transition-all cursor-pointer"
           >
             <option value="">All Statuses</option>
-            <option value="Pending">Pending</option>
+            <option value="Pending">Pending Review</option>
             <option value="Under Review">Under Review</option>
             <option value="Assigned">Assigned</option>
             <option value="In Progress">In Progress</option>
@@ -313,11 +309,10 @@ const CitizenDashboard = () => {
             <option value="Rejected">Rejected</option>
           </select>
 
-          {/* Category Filter */}
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium px-3 py-2 focus:outline-none focus:bg-white focus:border-blue-500 transition-all"
+            className="bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium px-3 py-2 focus:outline-none focus:bg-white focus:border-blue-900 transition-all cursor-pointer"
           >
             <option value="">All Categories</option>
             <option value="Road/Pothole">Road/Pothole</option>
@@ -328,108 +323,128 @@ const CitizenDashboard = () => {
             <option value="Drainage Problem">Drainage Problem</option>
             <option value="Other">Other</option>
           </select>
+
+          {(search || statusFilter || categoryFilter) && (
+            <button
+              type="button"
+              onClick={() => {
+                setSearch('');
+                setStatusFilter('');
+                setCategoryFilter('');
+              }}
+              className="text-xs text-blue-900 hover:text-blue-950 font-semibold px-2 py-1"
+            >
+              Reset
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Complaints List */}
+      {/* Complaints List / Table */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 bg-white border border-slate-200 rounded-xl">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-3"></div>
-          <span className="text-slate-600 text-sm font-medium">Retrieving your grievances...</span>
+        <div className="flex flex-col items-center justify-center py-20 bg-white border border-slate-200 rounded-xl shadow-xs">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-900 mb-3"></div>
+          <span className="text-slate-600 text-xs font-medium">Retrieving your grievances...</span>
         </div>
       ) : filteredComplaints.length === 0 ? (
-        <div className="text-center py-20 bg-white border border-slate-200 rounded-xl space-y-4">
-          <ClipboardList className="h-14 w-14 text-slate-300 mx-auto" />
-          <h3 className="text-lg font-bold text-slate-800">No Complaints Found</h3>
-          <p className="text-slate-500 text-sm max-w-sm mx-auto">
+        <div className="text-center py-16 bg-white border border-slate-200 rounded-xl shadow-xs space-y-3">
+          <ClipboardList className="h-12 w-12 text-slate-300 mx-auto" />
+          <h3 className="text-base font-bold text-slate-900">No Complaints Found</h3>
+          <p className="text-slate-500 text-xs max-w-sm mx-auto leading-relaxed">
             {complaints.length === 0
-              ? "You haven't filed any grievances yet. Report civic issues directly to municipal departments."
-              : 'No complaints match the selected search or filter criteria.'}
+              ? "You haven't filed any grievances yet. Report local civic issues directly to municipal departments."
+              : 'No complaints match the selected filter criteria. Try resetting your search or filters.'}
           </p>
-          <Link
-            to="/submit-complaint"
-            className="inline-flex items-center space-x-1.5 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            <span>File a Complaint now</span>
-          </Link>
+          {complaints.length === 0 && (
+            <Link
+              to="/submit-complaint"
+              className="inline-flex items-center space-x-1.5 bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2 rounded-lg text-xs font-semibold shadow-xs transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              <span>File a Complaint</span>
+            </Link>
+          )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredComplaints.map((c) => (
             <div
               key={c._id}
-              className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between overflow-hidden hover:shadow-md transition-shadow"
+              className="bg-white rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between overflow-hidden hover:border-slate-300 transition-colors"
             >
-              {/* Header Banner */}
-              <div className="p-5 border-b border-slate-100 space-y-2">
+              {/* Card Header */}
+              <div className="p-4 sm:p-5 border-b border-slate-100 space-y-2">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded tracking-wider">
+                  <span className="font-mono font-bold text-blue-900 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 tracking-wide text-[11px]">
                     {c.complaintId}
                   </span>
-                  <span className="font-medium text-slate-400">
-                    {new Date(c.createdAt).toLocaleDateString()}
+                  <span className="text-slate-400 font-medium text-[11px] flex items-center space-x-1">
+                    <Calendar className="h-3 w-3" />
+                    <span>{new Date(c.createdAt).toLocaleDateString()}</span>
                   </span>
                 </div>
-                <h3 className="text-base font-bold text-slate-900 line-clamp-1 hover:text-blue-600 transition-colors">
+
+                <h3 className="text-sm font-bold text-slate-900 line-clamp-1 hover:text-blue-900 transition-colors">
                   <Link to={`/complaint/${c._id}`}>{c.title}</Link>
                 </h3>
-                <span className="inline-block text-xs font-semibold text-slate-700 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded">
-                  {c.category}
-                </span>
+
+                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                  <span className="text-[10px] font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                    {c.category}
+                  </span>
+                  <PriorityBadge priority={c.priority} size="xs" />
+                </div>
               </div>
 
-              {/* Body */}
-              <div className="p-5 flex-1 space-y-4">
-                <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed">
+              {/* Card Body */}
+              <div className="p-4 sm:p-5 flex-1 space-y-3">
+                <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
                   {c.description}
                 </p>
 
-                <div className="text-xs text-slate-500 bg-slate-50 p-2.5 rounded-lg border border-slate-200 truncate">
-                  <span className="font-semibold text-slate-700">Location:</span> {c.location}
+                <div className="text-[11px] text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-200 flex items-start space-x-1.5">
+                  <MapPin className="h-3.5 w-3.5 text-slate-400 mt-0.5 shrink-0" />
+                  <span className="truncate">{c.location}</span>
                 </div>
 
-                {/* Badges */}
-                <div className="flex items-center space-x-2 pt-1">
-                  <div className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getStatusColor(c.status)}`}>
-                    {c.status}
-                  </div>
-                  <div className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getPriorityColor(c.priority)}`}>
-                    {c.priority} Priority
-                  </div>
+                <div>
+                  <StatusBadge status={c.status} size="xs" />
                 </div>
               </div>
 
-              {/* Action Buttons */}
-              <div className="px-5 py-3.5 bg-slate-50/80 border-t border-slate-100 flex justify-between items-center">
+              {/* Card Footer Actions */}
+              <div className="px-4 py-3 bg-slate-50/70 border-t border-slate-100 flex justify-between items-center text-xs">
                 <Link
                   to={`/complaint/${c._id}`}
-                  className="inline-flex items-center space-x-1.5 text-xs font-bold text-blue-600 hover:text-blue-800 transition-colors"
+                  className="inline-flex items-center space-x-1 text-xs font-bold text-blue-900 hover:text-blue-950 transition-colors"
                 >
-                  <Eye className="h-4 w-4" />
+                  <Eye className="h-3.5 w-3.5" />
                   <span>View Tracker</span>
                 </Link>
 
                 {c.status === 'Pending' ? (
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-1.5">
                     <Link
                       to={`/edit-complaint/${c._id}`}
-                      className="p-1.5 text-slate-500 hover:text-blue-600 rounded-lg hover:bg-white border border-transparent hover:border-slate-200 transition-all"
+                      className="p-1.5 text-slate-600 hover:text-blue-900 rounded-md hover:bg-white border border-transparent hover:border-slate-200 transition-all"
                       title="Edit Complaint"
+                      aria-label="Edit Complaint"
                     >
-                      <Edit3 className="h-4 w-4" />
+                      <Edit3 className="h-3.5 w-3.5" />
                     </Link>
                     <button
+                      type="button"
                       onClick={() => handleDelete(c._id, c.complaintId)}
-                      className="p-1.5 text-slate-500 hover:text-rose-600 rounded-lg hover:bg-white border border-transparent hover:border-slate-200 transition-all"
+                      className="p-1.5 text-slate-600 hover:text-rose-700 rounded-md hover:bg-white border border-transparent hover:border-slate-200 transition-all cursor-pointer"
                       title="Delete Complaint"
+                      aria-label="Delete Complaint"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
                 ) : (
-                  <span className="text-[11px] text-slate-400 font-medium italic">
-                    Assigned / In Progress
+                  <span className="text-[10px] text-slate-400 font-medium italic">
+                    Assigned to Officer
                   </span>
                 )}
               </div>

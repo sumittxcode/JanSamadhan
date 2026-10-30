@@ -1,6 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { AuthContext } from '../context/AuthContext';
+import { useTimeGreeting, getUserDisplayName } from '../utils/greeting';
 import {
   ClipboardList,
   Clock,
@@ -11,17 +13,13 @@ import {
   Download,
   Search,
   Filter,
-  Check,
   X,
   UserCheck,
   Users,
-  Layers,
-  ArrowUpRight,
   BarChart3,
   Building2,
   RefreshCw,
-  Flame,
-  TrendingUp
+  Flame
 } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import AnalyticsCard from '../Components/Analytics/AnalyticsCard';
@@ -30,9 +28,13 @@ import PriorityBarChart from '../Components/Analytics/PriorityBarChart';
 import ComplaintTrendChart from '../Components/Analytics/ComplaintTrendChart';
 import DepartmentChart from '../Components/Analytics/DepartmentChart';
 import OfficerWorkloadChart from '../Components/Analytics/OfficerWorkloadChart';
+import { StatusBadge, PriorityBadge } from '../Components/StatusBadge';
 
 const AdminDashboard = () => {
+  const { user } = useContext(AuthContext);
   const toast = useToast();
+  const greeting = useTimeGreeting();
+  const displayName = getUserDisplayName(user, 'Administrator');
   const [metrics, setMetrics] = useState({
     total: 0,
     totalComplaints: 0,
@@ -106,7 +108,7 @@ const AdminDashboard = () => {
         setMetrics(metricRes.data.metrics);
       }
 
-      // Fetch All Complaints
+      // Fetch Complaints
       const complaintsRes = await axios.get('/api/admin/complaints', {
         params: {
           search,
@@ -119,14 +121,14 @@ const AdminDashboard = () => {
         setComplaints(complaintsRes.data.complaints);
       }
 
-      // Fetch all officers for assignment
+      // Fetch Officers
       const officersRes = await axios.get('/api/admin/users?role=Department+Officer');
       if (officersRes.data.success) {
         setOfficers(officersRes.data.users);
       }
 
-      if (isManualRefresh) {
-        if (toast?.success) toast.success('Admin dashboard refreshed');
+      if (isManualRefresh && toast?.success) {
+        toast.success('Admin command center refreshed');
       }
     } catch (err) {
       console.error('Failed to load Admin Dashboard data:', err);
@@ -167,7 +169,7 @@ const AdminDashboard = () => {
   const handleAssignSubmit = async (e) => {
     e.preventDefault();
     if (!assignDept) {
-      if (toast?.warning) toast.warning('Please select a responsible department.');
+      if (toast?.warning) toast.warning('Please select a target department.');
       return;
     }
 
@@ -223,7 +225,7 @@ const AdminDashboard = () => {
 
   // Export CSV Helper
   const handleExportCSV = () => {
-    if (toast?.info) toast.info('Downloading grievance analytics export...');
+    if (toast?.info) toast.info('Downloading grievance export CSV...');
     window.open('/api/admin/export-csv', '_blank');
   };
 
@@ -231,34 +233,6 @@ const AdminDashboard = () => {
   const filteredOfficers = useMemo(() => {
     return officers.filter(o => !assignDept || o.department === assignDept);
   }, [officers, assignDept]);
-
-  const getPriorityBadge = (prio) => {
-    switch (prio) {
-      case 'High':
-        return 'bg-rose-50 text-rose-700 border-rose-200';
-      case 'Medium':
-        return 'bg-amber-50 text-amber-700 border-amber-200';
-      default:
-        return 'bg-slate-100 text-slate-700 border-slate-200';
-    }
-  };
-
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case 'Resolved':
-        return 'bg-emerald-50 text-emerald-700 border-emerald-200';
-      case 'Rejected':
-        return 'bg-rose-50 text-rose-700 border-rose-200';
-      case 'In Progress':
-        return 'bg-blue-50 text-blue-700 border-blue-200';
-      case 'Assigned':
-        return 'bg-indigo-50 text-indigo-700 border-indigo-200';
-      case 'Under Review':
-        return 'bg-purple-50 text-purple-700 border-purple-200';
-      default:
-        return 'bg-amber-50 text-amber-700 border-amber-200';
-    }
-  };
 
   const statusTabs = [
     { label: 'All', value: '' },
@@ -270,37 +244,37 @@ const AdminDashboard = () => {
   ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="space-y-6">
       {/* Title / Action Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 pb-2 border-b border-slate-200">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-200">
         <div>
-          <div className="flex items-center space-x-2">
-            <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800 uppercase tracking-wider">
-              Central Administration
-            </span>
-            <span className="text-xs text-slate-400">| System Command Center</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mt-1">
-            Grievance Redressal Control Room
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+            {greeting}, {displayName}!
           </h1>
-          <p className="text-sm text-slate-500">
-            Monitor civic telemetry, route grievances to department officers, and manage resolution SLAs.
+          <h2 className="text-sm sm:text-base font-semibold text-slate-700 mt-1">
+            Admin Dashboard
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            System-wide operational oversight, grievance routing, officer allocations, and SLA monitoring.
           </p>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2.5">
           <button
+            type="button"
             onClick={() => initAdminData(true)}
             disabled={refreshing}
-            className="p-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-sm font-medium shadow-sm flex items-center space-x-1.5 transition-colors disabled:opacity-60"
-            title="Refresh master data"
+            className="p-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg text-xs font-semibold shadow-xs flex items-center space-x-1.5 transition-colors disabled:opacity-60 cursor-pointer"
+            title="Refresh control room data"
           >
-            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin text-blue-600' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin text-blue-900' : ''}`} />
+            <span>Refresh</span>
           </button>
 
           <button
+            type="button"
             onClick={handleExportCSV}
-            className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-lg text-sm font-semibold shadow-sm flex items-center space-x-2 transition-all hover:shadow"
+            className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2.5 rounded-lg text-xs font-semibold shadow-xs flex items-center space-x-2 transition-colors cursor-pointer"
           >
             <Download className="h-4 w-4" />
             <span>Export CSV Report</span>
@@ -308,40 +282,40 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* High-Level Control Room Statistics Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+      {/* Summary Metrics Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
         <AnalyticsCard
-          title="Citizens Registered"
+          title="Citizens"
           value={metrics.totalCitizens || 0}
-          subtitle="Active public accounts"
+          subtitle="Registered users"
           icon={Users}
           color="blue"
         />
         <AnalyticsCard
-          title="Department Officers"
+          title="Officers"
           value={metrics.totalOfficers || officers.length}
-          subtitle="Redressal officers"
+          subtitle="Field personnel"
           icon={UserCheck}
           color="purple"
         />
         <AnalyticsCard
-          title="Active Departments"
+          title="Departments"
           value={metrics.totalDepartments || departmentsList.length}
-          subtitle="Civic operational wings"
+          subtitle="Active operational wings"
           icon={Building2}
           color="slate"
         />
         <AnalyticsCard
-          title="Total Complaints"
+          title="Total Filed"
           value={metrics.totalComplaints || metrics.total || complaints.length}
-          subtitle="Master catalogue"
+          subtitle="All grievances"
           icon={ClipboardList}
           color="slate"
         />
         <AnalyticsCard
-          title="Pending Complaints"
+          title="Pending Triage"
           value={metrics.pendingComplaints || metrics.pending}
-          subtitle="Awaiting triage"
+          subtitle="Awaiting allocation"
           icon={Clock}
           color="amber"
         />
@@ -353,23 +327,23 @@ const AdminDashboard = () => {
           color="purple"
         />
         <AnalyticsCard
-          title="Assigned to Officer"
+          title="Assigned"
           value={metrics.assignedComplaints || metrics.assigned}
-          subtitle="Officer allocated"
+          subtitle="Dispatched to officer"
           icon={AlertTriangle}
           color="blue"
         />
         <AnalyticsCard
           title="In Progress"
           value={metrics.inProgressComplaints || metrics.inProgress}
-          subtitle="Active on-ground work"
+          subtitle="Active on ground"
           icon={AlertTriangle}
           color="blue"
         />
         <AnalyticsCard
-          title="Resolved Cases"
+          title="Resolved"
           value={metrics.resolvedComplaints || metrics.resolved}
-          subtitle={`${metrics.resolutionPercentage}% global SLA`}
+          subtitle={`${metrics.resolutionPercentage}% resolution rate`}
           icon={CheckCircle2}
           color="emerald"
         />
@@ -382,28 +356,28 @@ const AdminDashboard = () => {
         />
       </div>
 
-      {/* Admin Visual Analytics & Reports Section */}
-      <div className="space-y-6">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-200 pb-3">
+      {/* Visual Analytics & Reports Section */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
           <div className="flex items-center space-x-2">
-            <div className="p-2 bg-blue-50 text-blue-700 rounded-lg">
-              <BarChart3 className="h-5 w-5" />
+            <div className="p-1.5 bg-blue-50 text-blue-900 rounded-lg">
+              <BarChart3 className="h-4.5 w-4.5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-900">System-Wide Analytics &amp; Reports</h2>
-              <p className="text-xs text-slate-500">Real-time MongoDB aggregated data visualizations and telemetry across all municipal domains.</p>
+              <h2 className="text-sm font-bold text-slate-900">System Telemetry &amp; Analytics</h2>
+              <p className="text-[11px] text-slate-500">Aggregated real-time metrics across all municipal grievance categories.</p>
             </div>
           </div>
-          <div className="mt-2 sm:mt-0 flex items-center space-x-2 text-xs">
-            <span className="font-semibold text-slate-600">National Redressal Rate:</span>
-            <span className="px-3 py-1 rounded-full font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <div className="flex items-center space-x-2 text-xs">
+            <span className="font-medium text-slate-600">Global Resolution Rate:</span>
+            <span className="px-2.5 py-0.5 rounded-full font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
               {metrics.resolutionPercentage}% Resolved
             </span>
           </div>
         </div>
 
-        {/* Row 1: Status Distribution & Priority Breakdown */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Row 1: Status Donut & Priority Bar */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <StatusDonutChart
             data={metrics.statusDistribution}
             title="System-Wide Grievance Status"
@@ -417,11 +391,11 @@ const AdminDashboard = () => {
         </div>
 
         {/* Row 2: Inflow Trend & Department Performance */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <ComplaintTrendChart
             data={metrics.monthlyStats}
             title="Monthly Grievance Inflow Trends"
-            subtitle="Complaint submission cadence over chronological months"
+            subtitle="Submission cadence across chronological months"
           />
           <DepartmentChart
             data={metrics.departmentStats}
@@ -434,7 +408,7 @@ const AdminDashboard = () => {
         <div>
           <OfficerWorkloadChart
             data={metrics.officerWorkload}
-            title="Department Officer Assignment &amp; Workload Distribution"
+            title="Officer Workload &amp; Assignment Matrix"
             subtitle="Tracking individual officer ticket load, active tasks, and resolution performance"
           />
         </div>
@@ -445,11 +419,12 @@ const AdminDashboard = () => {
         {statusTabs.map((tab) => (
           <button
             key={tab.value}
+            type="button"
             onClick={() => setStatusFilter(tab.value)}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all ${
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
               statusFilter === tab.value
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:text-slate-900'
+                ? 'bg-blue-900 text-white shadow-xs'
+                : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
             }`}
           >
             {tab.label}
@@ -458,7 +433,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
         {/* Search */}
         <div className="relative flex-1 max-w-md">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
@@ -466,15 +441,15 @@ const AdminDashboard = () => {
           </div>
           <input
             type="text"
-            placeholder="Search grievances by ID, title, citizen, or location..."
+            placeholder="Search by ID, title, citizen, or location..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 pr-4 py-2 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+            className="pl-9 pr-4 py-2 w-full bg-slate-50 border border-slate-300 rounded-lg text-xs placeholder-slate-400 focus:outline-none focus:bg-white focus:border-blue-900 transition-all font-sans"
           />
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
           <div className="flex items-center space-x-1.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">
             <Filter className="h-3.5 w-3.5" />
             <span>Filters:</span>
@@ -483,7 +458,7 @@ const AdminDashboard = () => {
           <select
             value={categoryFilter}
             onChange={(e) => setCategoryFilter(e.target.value)}
-            className="bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium px-3 py-2 focus:outline-none focus:bg-white focus:border-blue-500 transition-all"
+            className="bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium px-3 py-2 focus:outline-none focus:bg-white focus:border-blue-900 transition-all cursor-pointer"
           >
             <option value="">All Categories</option>
             {departmentsList.map((cat, idx) => (
@@ -494,7 +469,7 @@ const AdminDashboard = () => {
           <select
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
-            className="bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium px-3 py-2 focus:outline-none focus:bg-white focus:border-blue-500 transition-all"
+            className="bg-slate-50 border border-slate-300 rounded-lg text-xs font-medium px-3 py-2 focus:outline-none focus:bg-white focus:border-blue-900 transition-all cursor-pointer"
           >
             <option value="">All Priorities</option>
             <option value="Low">Low</option>
@@ -504,13 +479,14 @@ const AdminDashboard = () => {
 
           {(search || statusFilter || categoryFilter || priorityFilter) && (
             <button
+              type="button"
               onClick={() => {
                 setSearch('');
                 setStatusFilter('');
                 setCategoryFilter('');
                 setPriorityFilter('');
               }}
-              className="text-xs text-blue-600 hover:text-blue-800 font-semibold px-2 py-1"
+              className="text-xs text-blue-900 hover:text-blue-950 font-semibold px-2 py-1"
             >
               Reset Filters
             </button>
@@ -518,130 +494,130 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Grid of Complaints */}
+      {/* Complaints Grid */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 bg-white border border-slate-200 rounded-xl">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-3"></div>
-          <span className="text-slate-600 text-sm font-medium">Retrieving grievance master catalog...</span>
+        <div className="flex flex-col items-center justify-center py-20 bg-white border border-slate-200 rounded-xl shadow-xs">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-900 mb-3"></div>
+          <span className="text-slate-600 text-xs font-medium">Retrieving master catalog...</span>
         </div>
       ) : complaints.length === 0 ? (
-        <div className="text-center py-16 bg-white border border-slate-200 rounded-xl space-y-3">
+        <div className="text-center py-16 bg-white border border-slate-200 rounded-xl shadow-xs space-y-3">
           <ClipboardList className="h-12 w-12 text-slate-300 mx-auto" />
-          <h3 className="text-base font-bold text-slate-800">No Complaints Match Filter</h3>
-          <p className="text-slate-500 text-xs max-w-xs mx-auto">
-            Try adjusting your search criteria, category or status filters.
+          <h3 className="text-base font-bold text-slate-900">No Complaints Match Filter</h3>
+          <p className="text-slate-500 text-xs max-w-xs mx-auto leading-relaxed">
+            Try adjusting your search criteria, category, or status filters.
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {complaints.map((c) => (
             <div
               key={c._id}
-              className="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between overflow-hidden hover:shadow-md transition-all duration-200"
+              className="bg-white rounded-xl border border-slate-200 shadow-xs flex flex-col justify-between overflow-hidden hover:border-slate-300 transition-colors"
             >
-              {/* Header */}
-              <div className="p-5 border-b border-slate-100 space-y-2">
+              {/* Card Header */}
+              <div className="p-4 sm:p-5 border-b border-slate-100 space-y-2">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="font-mono font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded tracking-wider">
+                  <span className="font-mono font-bold text-blue-900 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 tracking-wide text-[11px]">
                     {c.complaintId}
                   </span>
-                  <span className="text-slate-400 font-medium">
+                  <span className="text-slate-400 font-medium text-[11px]">
                     {new Date(c.createdAt).toLocaleDateString()}
                   </span>
                 </div>
-                <h4 className="text-base font-bold text-slate-900 line-clamp-1 hover:text-blue-600 transition-colors">
+
+                <h3 className="text-sm font-bold text-slate-900 line-clamp-1 hover:text-blue-900 transition-colors">
                   <Link to={`/complaint/${c._id}`}>{c.title}</Link>
-                </h4>
-                <div className="flex flex-wrap items-center gap-1.5 mt-2">
-                  <span className="text-[10px] font-bold text-slate-700 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded">
+                </h3>
+
+                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                  <span className="text-[10px] font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
                     {c.category}
                   </span>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 border rounded ${getPriorityBadge(c.priority)}`}>
-                    {c.priority} Priority
-                  </span>
+                  <PriorityBadge priority={c.priority} size="xs" />
                 </div>
               </div>
 
-              {/* Body */}
-              <div className="p-5 flex-1 space-y-4">
-                <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed">{c.description}</p>
-                
-                {/* Meta details */}
-                <div className="text-xs space-y-2 bg-slate-50 p-3.5 rounded-lg border border-slate-200/70 text-slate-600">
+              {/* Card Body */}
+              <div className="p-4 sm:p-5 flex-1 space-y-3">
+                <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                  {c.description}
+                </p>
+
+                <div className="text-[11px] space-y-1.5 bg-slate-50 p-3 rounded-lg border border-slate-200 text-slate-600">
                   <p className="truncate">
-                    <span className="font-semibold text-slate-800">Location:</span> {c.location}
+                    <span className="font-semibold text-slate-900">Location:</span> {c.location}
                   </p>
                   <p className="truncate">
-                    <span className="font-semibold text-slate-800">Citizen:</span> {c.citizenId?.fullName || 'Anonymous'}
+                    <span className="font-semibold text-slate-900">Citizen:</span> {c.citizenId?.fullName || 'Citizen User'}
                   </p>
                   <p className="truncate">
-                    <span className="font-semibold text-slate-800">Department:</span>{' '}
-                    <span className="font-medium text-slate-900">{c.department || 'Unassigned'}</span>
+                    <span className="font-semibold text-slate-900">Department:</span> {c.department || 'Unassigned'}
                   </p>
                   <p className="truncate">
-                    <span className="font-semibold text-slate-800">Assigned Officer:</span>{' '}
+                    <span className="font-semibold text-slate-900">Assigned Officer:</span>{' '}
                     {c.assignedOfficer ? (
-                      <span className="text-blue-700 font-semibold">{c.assignedOfficer.fullName}</span>
+                      <span className="text-blue-900 font-semibold">{c.assignedOfficer.fullName}</span>
                     ) : (
-                      <span className="text-amber-600 font-semibold">Unassigned</span>
+                      <span className="text-amber-700 font-medium italic">Unassigned</span>
                     )}
                   </p>
                 </div>
+
+                <div>
+                  <StatusBadge status={c.status} size="xs" />
+                </div>
               </div>
 
-              {/* Actions Footer */}
-              <div className="px-5 py-3.5 bg-slate-50/80 border-t border-slate-100 flex justify-between items-center flex-wrap gap-2">
-                <div>
-                  <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${getStatusBadge(c.status)}`}>
-                    {c.status}
-                  </span>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <Link
-                    to={`/complaint/${c._id}`}
-                    className="p-1.5 text-slate-500 hover:text-blue-600 rounded-lg hover:bg-white border border-transparent hover:border-slate-200 transition-all"
-                    title="View Grievance Tracker"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Link>
+              {/* Card Footer Actions */}
+              <div className="px-4 py-3 bg-slate-50/70 border-t border-slate-100 flex justify-between items-center text-xs gap-2">
+                <Link
+                  to={`/complaint/${c._id}`}
+                  className="p-1.5 text-slate-600 hover:text-blue-900 rounded-md hover:bg-white border border-transparent hover:border-slate-200 transition-colors inline-flex items-center space-x-1"
+                  title="View Grievance Record"
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                  <span className="text-[11px] font-semibold">View</span>
+                </Link>
 
-                  {c.status !== 'Resolved' && c.status !== 'Rejected' && (
-                    <>
-                      <button
-                        onClick={() => handleOpenAssignModal(c)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-sm transition-colors flex items-center space-x-1"
-                      >
-                        <span>Assign</span>
-                      </button>
-                      <button
-                        onClick={() => handleOpenRejectModal(c)}
-                        className="bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-rose-200 transition-colors"
-                      >
-                        Reject
-                      </button>
-                    </>
-                  )}
-                </div>
+                {c.status !== 'Resolved' && c.status !== 'Rejected' && (
+                  <div className="flex items-center space-x-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleOpenAssignModal(c)}
+                      className="bg-blue-900 hover:bg-blue-800 text-white text-xs font-semibold px-3 py-1.5 rounded-lg shadow-xs transition-colors cursor-pointer"
+                    >
+                      Assign
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenRejectModal(c)}
+                      className="bg-rose-50 hover:bg-rose-100 text-rose-800 text-xs font-semibold px-2.5 py-1.5 rounded-lg border border-rose-200 transition-colors cursor-pointer"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {/* Specific Officer Assignment Modal */}
+      {/* Assignment Modal */}
       {assignModalOpen && selectedComplaint && (
-        <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
+        <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center p-4 z-50 backdrop-blur-xs">
+          <div className="bg-white w-full max-w-lg rounded-xl shadow-xl border border-slate-200 overflow-hidden">
             <div className="bg-slate-900 text-white px-6 py-4 flex justify-between items-center select-none">
               <div>
-                <h3 className="font-bold text-base flex items-center space-x-2">
-                  <UserCheck className="h-5 w-5 text-blue-400" />
-                  <span>Assign Resolution Officer</span>
+                <h3 className="font-bold text-sm flex items-center space-x-2">
+                  <UserCheck className="h-4 w-4 text-blue-300" />
+                  <span>Assign Redressal Officer</span>
                 </h3>
-                <span className="text-xs text-slate-400">Grievance Ref: {selectedComplaint.complaintId}</span>
+                <span className="text-[11px] text-slate-400 font-mono">Ref: {selectedComplaint.complaintId}</span>
               </div>
               <button
+                type="button"
                 onClick={() => setAssignModalOpen(false)}
                 className="text-slate-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-slate-800"
               >
@@ -649,19 +625,16 @@ const AdminDashboard = () => {
               </button>
             </div>
 
-            <form onSubmit={handleAssignSubmit} className="p-6 space-y-5">
-              {/* Complaint Summary Context */}
-              <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200/70 text-xs space-y-1">
-                <p><span className="font-semibold text-slate-700">Complaint:</span> {selectedComplaint.title}</p>
-                <p><span className="font-semibold text-slate-700">Location:</span> {selectedComplaint.location}</p>
-                <p><span className="font-semibold text-slate-700">Reported Category:</span> {selectedComplaint.category}</p>
-                <p><span className="font-semibold text-slate-700">Citizen:</span> {selectedComplaint.citizenId?.fullName} ({selectedComplaint.citizenId?.email || 'N/A'})</p>
+            <form onSubmit={handleAssignSubmit} className="p-6 space-y-4">
+              <div className="bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs space-y-1 text-slate-700">
+                <p><span className="font-semibold text-slate-900">Title:</span> {selectedComplaint.title}</p>
+                <p><span className="font-semibold text-slate-900">Location:</span> {selectedComplaint.location}</p>
+                <p><span className="font-semibold text-slate-900">Category:</span> {selectedComplaint.category}</p>
               </div>
 
-              {/* Department */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                  1. Target Department <span className="text-red-500">*</span>
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  1. Target Department <span className="text-rose-600">*</span>
                 </label>
                 <select
                   value={assignDept}
@@ -669,7 +642,7 @@ const AdminDashboard = () => {
                     setAssignDept(e.target.value);
                     setAssignOfficer('');
                   }}
-                  className="px-3.5 py-2 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:bg-white focus:border-blue-500 transition-all font-sans"
+                  className="px-3.5 py-2 w-full bg-slate-50 border border-slate-300 rounded-lg text-xs focus:outline-none focus:bg-white focus:border-blue-900 transition-all font-sans cursor-pointer"
                   required
                 >
                   <option value="">-- Choose Department --</option>
@@ -679,10 +652,9 @@ const AdminDashboard = () => {
                 </select>
               </div>
 
-              {/* Specific Officer Selection with Workload Indication */}
               <div>
                 <div className="flex justify-between items-center mb-1.5">
-                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
                     2. Designated Officer {assignDept ? `(${assignDept})` : ''}
                   </label>
                   <span className="text-[11px] text-slate-500">
@@ -693,54 +665,47 @@ const AdminDashboard = () => {
                 <select
                   value={assignOfficer}
                   onChange={(e) => setAssignOfficer(e.target.value)}
-                  className="px-3.5 py-2 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:bg-white focus:border-blue-500 transition-all font-sans"
+                  className="px-3.5 py-2 w-full bg-slate-50 border border-slate-300 rounded-lg text-xs focus:outline-none focus:bg-white focus:border-blue-900 transition-all font-sans cursor-pointer"
                 >
-                  <option value="">-- Auto-route to Department Pool (Unassigned Officer) --</option>
+                  <option value="">-- Department Pool (Unassigned to Specific Officer) --</option>
                   {filteredOfficers.map((o) => {
                     const activeCount = officerWorkload[o._id] || 0;
                     return (
                       <option key={o._id} value={o._id}>
-                        {o.fullName} • {o.email} ({o.department || 'General'}) — [{activeCount} active tasks]
+                        {o.fullName} • ({o.department || 'General'}) — [{activeCount} active tasks]
                       </option>
                     );
                   })}
                 </select>
-                {assignDept && filteredOfficers.length === 0 && (
-                  <p className="text-[11px] text-amber-600 mt-1">
-                    No dedicated officer registered in '{assignDept}'. You can assign department directly or select a general officer.
-                  </p>
-                )}
               </div>
 
-              {/* Priority Override */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                  3. Grievance Priority Level
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                  3. Priority Override
                 </label>
                 <select
                   value={assignPriority}
                   onChange={(e) => setAssignPriority(e.target.value)}
-                  className="px-3.5 py-2 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:bg-white focus:border-blue-500 transition-all font-sans"
+                  className="px-3.5 py-2 w-full bg-slate-50 border border-slate-300 rounded-lg text-xs focus:outline-none focus:bg-white focus:border-blue-900 transition-all font-sans cursor-pointer"
                 >
                   <option value="Low">Low Priority (Standard SLA)</option>
-                  <option value="Medium">Medium Priority (Expedited)</option>
-                  <option value="High">High Priority (Urgent Public Safety)</option>
+                  <option value="Medium">Medium Priority (Standard SLA)</option>
+                  <option value="High">High Priority (Urgent Safety Risk)</option>
                 </select>
               </div>
 
-              {/* Actions */}
               <div className="pt-4 border-t border-slate-100 flex justify-end space-x-3">
                 <button
                   type="button"
                   onClick={() => setAssignModalOpen(false)}
-                  className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                  className="px-4 py-2 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={assignLoading}
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold shadow transition-colors disabled:opacity-60 flex items-center space-x-1.5"
+                  className="px-5 py-2 bg-blue-900 hover:bg-blue-800 text-white rounded-lg text-xs font-bold shadow-xs transition-colors disabled:opacity-60 cursor-pointer"
                 >
                   {assignLoading ? 'Dispatching...' : 'Dispatch Assignment'}
                 </button>
@@ -752,17 +717,18 @@ const AdminDashboard = () => {
 
       {/* Reject Modal */}
       {rejectModalOpen && selectedComplaint && (
-        <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
-          <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
+        <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center p-4 z-50 backdrop-blur-xs">
+          <div className="bg-white w-full max-w-md rounded-xl shadow-xl border border-slate-200 overflow-hidden">
             <div className="bg-slate-900 text-white px-6 py-4 flex justify-between items-center select-none">
               <div>
-                <h3 className="font-bold text-base flex items-center space-x-2">
-                  <ShieldAlert className="h-5 w-5 text-rose-400" />
+                <h3 className="font-bold text-sm flex items-center space-x-2">
+                  <ShieldAlert className="h-4 w-4 text-rose-400" />
                   <span>Reject Grievance</span>
                 </h3>
-                <span className="text-xs text-slate-400">Ref: {selectedComplaint.complaintId}</span>
+                <span className="text-[11px] text-slate-400 font-mono">Ref: {selectedComplaint.complaintId}</span>
               </div>
               <button
+                type="button"
                 onClick={() => setRejectModalOpen(false)}
                 className="text-slate-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-slate-800"
               >
@@ -773,36 +739,35 @@ const AdminDashboard = () => {
             <form onSubmit={handleRejectSubmit} className="p-6 space-y-4">
               <div>
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Rejection Reason & Remarks <span className="text-rose-500">*</span>
+                  Rejection Reason &amp; Remarks <span className="text-rose-600">*</span>
                 </label>
                 <textarea
                   rows="4"
                   required
                   value={rejectRemarks}
                   onChange={(e) => setRejectRemarks(e.target.value)}
-                  className="px-3.5 py-2.5 w-full bg-slate-50 border border-slate-300 rounded-lg text-sm placeholder-slate-400 focus:outline-none focus:bg-white focus:border-rose-500 transition-all font-sans"
-                  placeholder="Explain why this grievance is rejected (e.g. duplicate submission, non-jurisdictional, false report)..."
+                  className="px-3.5 py-2.5 w-full bg-slate-50 border border-slate-300 rounded-lg text-xs placeholder-slate-400 focus:outline-none focus:bg-white focus:border-rose-600 transition-all font-sans leading-relaxed"
+                  placeholder="Explain why this grievance cannot be accepted (e.g. outside municipal boundary, duplicate submission, insufficient landmark info)..."
                 ></textarea>
                 <p className="text-[11px] text-slate-500 mt-1">
-                  This note will be recorded in the official audit trail and citizen tracker.
+                  This explanation will be recorded in the audit trail and displayed on the citizen tracker.
                 </p>
               </div>
 
-              {/* Actions */}
               <div className="pt-4 border-t border-slate-100 flex justify-end space-x-3">
                 <button
                   type="button"
                   onClick={() => setRejectModalOpen(false)}
-                  className="px-4 py-2 border border-slate-300 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
+                  className="px-4 py-2 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={rejectLoading}
-                  className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-sm font-semibold shadow transition-colors disabled:opacity-60"
+                  className="px-5 py-2 bg-rose-700 hover:bg-rose-800 text-white rounded-lg text-xs font-bold shadow-xs transition-colors disabled:opacity-60 cursor-pointer"
                 >
-                  {rejectLoading ? 'Processing...' : 'Confirm Rejection'}
+                  {rejectLoading ? 'Rejecting...' : 'Confirm Rejection'}
                 </button>
               </div>
             </form>
