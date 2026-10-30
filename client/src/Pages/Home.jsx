@@ -103,7 +103,8 @@ const Home = () => {
 
               {/* Main Heading */}
               <h1 className="text-3xl sm:text-4xl lg:text-[42px] font-bold text-slate-900 tracking-tight leading-[1.2]">
-                Your Community. Your Voice. Better Civic Services.
+                Your Community. Your Voice.<br />
+                Better Civic Services.
               </h1>
 
               {/* Description */}
@@ -128,24 +129,6 @@ const Home = () => {
                   <Eye className="h-4.5 w-4.5 text-slate-500" />
                   <span>Track a Complaint</span>
                 </Link>
-
-                {user ? (
-                  <Link
-                    to={user.role === 'Citizen' ? '/dashboard' : user.role === 'Department Officer' ? '/officer' : '/admin'}
-                    className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl text-sm font-semibold shadow-xs transition-colors flex items-center space-x-2"
-                  >
-                    <span>Dashboard Desk</span>
-                    <ArrowRight className="h-4 w-4 text-slate-300" />
-                  </Link>
-                ) : (
-                  <Link
-                    to="/login"
-                    className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-3 rounded-xl text-sm font-semibold shadow-xs transition-colors flex items-center space-x-2"
-                  >
-                    <span>Citizen &amp; Staff Login</span>
-                    <ArrowRight className="h-4 w-4 text-slate-300" />
-                  </Link>
-                )}
               </div>
 
               {/* Trust Indicators */}
