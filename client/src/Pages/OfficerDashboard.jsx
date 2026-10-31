@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext } from '../Context/AuthContext';
 import {
   ClipboardList,
   Clock,
@@ -23,7 +23,7 @@ import {
   Flame,
   RefreshCw
 } from 'lucide-react';
-import { useToast } from '../context/ToastContext';
+import { useToast } from '../Context/ToastContext';
 import AnalyticsCard from '../Components/Analytics/AnalyticsCard';
 import StatusDonutChart from '../Components/Analytics/StatusDonutChart';
 import PriorityBarChart from '../Components/Analytics/PriorityBarChart';

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { Clock, Activity, User, Search, RefreshCw } from 'lucide-react';
-import { useToast } from '../context/ToastContext';
+import { useToast } from '../Context/ToastContext';
 
 const AdminLogs = () => {
   const toast = useToast();

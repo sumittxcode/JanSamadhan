@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { Plus, Trash2, Edit2, X, AlertCircle, Search, FolderTree, Building2 } from 'lucide-react';
-import { useToast } from '../context/ToastContext';
+import { useToast } from '../Context/ToastContext';
 
 const AdminCategories = () => {
   const toast = useToast();
