@@ -22,6 +22,7 @@ import AdminUsers from './Pages/AdminUsers';
 import AdminCategories from './Pages/AdminCategories';
 import AdminLogs from './Pages/AdminLogs';
 import AdminLogin from './Pages/AdminLogin';
+import OfficerLogin from './Pages/OfficerLogin';
 
 // Public layout: renders the public marketing navbar and footer for public routes
 const PublicLayout = () => {
@@ -46,6 +47,8 @@ function App() {
             <Route element={<PublicLayout />}>
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/officer-login" element={<OfficerLogin />} />
+              <Route path="/staff-login" element={<OfficerLogin />} />
               <Route path="/admin-login" element={<AdminLogin />} />
               <Route path="/register" element={<Register />} />
             </Route>

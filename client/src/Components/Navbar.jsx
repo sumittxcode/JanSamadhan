@@ -7,7 +7,8 @@ import {
   Menu, 
   X, 
   Shield, 
-  ChevronDown
+  ChevronDown,
+  Users
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -248,6 +249,13 @@ const Navbar = () => {
                   Citizen Login
                 </Link>
                 <Link
+                  to="/officer-login"
+                  className="text-xs font-semibold bg-[#1F3A5F] hover:bg-[#172d49] text-white border border-[#2d4f7c] px-3.5 py-2 rounded-lg shadow-xs hover:shadow-sm transition-all flex items-center space-x-1.5"
+                >
+                  <Users className="h-3.5 w-3.5" />
+                  <span>Staff Login</span>
+                </Link>
+                <Link
                   to="/register"
                   className="text-xs font-semibold bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2 rounded-lg shadow-xs hover:shadow-sm transition-all"
                 >
@@ -338,14 +346,22 @@ const Navbar = () => {
                 <Link
                   to="/login"
                   onClick={() => setShowMobileMenu(false)}
-                  className="block text-center px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50"
+                  className="block text-center px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold text-xs"
                 >
-                  Sign In
+                  Citizen Login
+                </Link>
+                <Link
+                  to="/officer-login"
+                  onClick={() => setShowMobileMenu(false)}
+                  className="flex items-center justify-center space-x-1.5 px-4 py-2 rounded-lg bg-[#1F3A5F] hover:bg-[#172d49] text-white border border-[#2d4f7c] font-semibold text-xs transition-colors"
+                >
+                  <Users className="h-3.5 w-3.5" />
+                  <span>Staff Login</span>
                 </Link>
                 <Link
                   to="/register"
                   onClick={() => setShowMobileMenu(false)}
-                  className="block text-center px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 font-semibold"
+                  className="block text-center px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 font-semibold text-xs"
                 >
                   Register Account
                 </Link>
