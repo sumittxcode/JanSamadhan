@@ -1,7 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import { ToastProvider } from './context/ToastContext';
+import { AuthProvider } from './Context/AuthContext';
+import { ToastProvider } from './Context/ToastContext';
 import Navbar from './Components/Navbar';
 import Footer from './Components/Footer';
 import ProtectedRoute from './Components/ProtectedRoute';
