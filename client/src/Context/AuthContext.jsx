@@ -9,6 +9,8 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState([]);
 
+  // Setup default axios configuration
+  axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'https://jansamadhan-backend-vxjw.onrender.com';
   // Setup default axios authorization header
   if (token) {
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
