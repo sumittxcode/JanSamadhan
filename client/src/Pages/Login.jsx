@@ -4,7 +4,7 @@ import { AuthContext } from '../context/AuthContext';
 import { Shield, Mail, Lock, ArrowRight, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 const Login = () => {
-  const { login, user } = useContext(AuthContext);
+  const { login, logout, user } = useContext(AuthContext);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -15,16 +15,10 @@ const Login = () => {
 
   const redirectParam = searchParams.get('redirect');
 
-  // If already logged in, redirect right away
+  // If already logged in as Citizen, redirect to citizen dashboard
   useEffect(() => {
-    if (user) {
-      if (user.role === 'Administrator') {
-        navigate('/admin', { replace: true });
-      } else if (user.role === 'Department Officer') {
-        navigate('/officer', { replace: true });
-      } else {
-        navigate(redirectParam ? `/${redirectParam}` : '/dashboard', { replace: true });
-      }
+    if (user && user.role === 'Citizen') {
+      navigate(redirectParam ? `/${redirectParam}` : '/dashboard', { replace: true });
     }
   }, [user, navigate, redirectParam]);
 
@@ -38,11 +32,31 @@ const Login = () => {
     }
 
     setLoading(true);
-    const result = await login(email.trim(), password);
-    setLoading(false);
+    try {
+      const result = await login(email.trim(), password);
 
-    if (!result.success) {
-      setError(result.message || 'Login failed. Please check your credentials.');
+      if (!result.success) {
+        setError(result.message || 'Login failed. Please check your credentials.');
+        setLoading(false);
+        return;
+      }
+
+      // Enforce role separation: Citizen login is strictly for citizens
+      if (result.user.role !== 'Citizen') {
+        logout();
+        setError(result.user.role === 'Department Officer'
+          ? 'Access Restricted: Officer accounts must use the Staff Login portal.'
+          : 'Access Restricted: Administrator accounts must use the Administrative Sign In portal.'
+        );
+        setLoading(false);
+        return;
+      }
+
+      navigate(redirectParam ? `/${redirectParam}` : '/dashboard', { replace: true });
+    } catch {
+      setError('An error occurred during authentication. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -55,10 +69,10 @@ const Login = () => {
             <Shield className="h-6 w-6" />
           </div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-            Sign In
+            Citizen Sign In
           </h1>
           <p className="text-xs text-slate-500 font-medium uppercase tracking-wider">
-            Citizen &amp; Officer Access
+            Citizen Portal Access
           </p>
         </div>
 
@@ -134,7 +148,7 @@ const Login = () => {
                 <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               ) : (
                 <>
-                  <span>Sign In to Account</span>
+                  <span>Sign In as Citizen</span>
                   <ArrowRight className="h-4 w-4 ml-1.5" />
                 </>
               )}

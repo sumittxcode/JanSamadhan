@@ -20,6 +20,9 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     if (allowedRoles && allowedRoles.includes('Administrator') && !allowedRoles.includes('Citizen')) {
       return <Navigate to="/admin-login" replace />;
     }
+    if (allowedRoles && allowedRoles.includes('Department Officer') && !allowedRoles.includes('Citizen')) {
+      return <Navigate to="/officer-login" replace />;
+    }
     return <Navigate to="/login" replace />;
   }
 
