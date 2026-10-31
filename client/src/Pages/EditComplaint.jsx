@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import axios from 'axios';
 import { ArrowLeft, Edit3, Upload, AlertCircle, MapPin } from 'lucide-react';
-import { useToast } from '../context/ToastContext';
+import { useToast } from '../Context/ToastContext';
 
 const EditComplaint = () => {
   const { id } = useParams();

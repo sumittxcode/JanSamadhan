@@ -14,8 +14,8 @@ import {
   Check,
   XCircle
 } from 'lucide-react';
-import { AuthContext } from '../context/AuthContext';
-import { useToast } from '../context/ToastContext';
+import { AuthContext } from '../Context/AuthContext';
+import { useToast } from '../Context/ToastContext';
 import { StatusBadge, PriorityBadge } from '../Components/StatusBadge';
 
 const ComplaintDetails = () => {
