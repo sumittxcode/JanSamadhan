@@ -10,7 +10,7 @@ export const AuthProvider = ({ children }) => {
   const [notifications, setNotifications] = useState([]);
 
   // Setup default axios configuration
-  axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'https://jansamadhan-backend-vxjw.onrender.com';
+  axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   // Setup default axios authorization header
   if (token) {
     axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
